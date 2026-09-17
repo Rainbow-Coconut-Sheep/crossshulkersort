@@ -85,7 +85,7 @@ public final class SortPlan {
                 com.yeyang.crossshulkersort.config.ModConfig.effective();
 
         for (int i = 0; i < 36; i++) {
-            ItemStack stack = inv.getStack(i);
+            ItemStack stack = inv.getInvStack(i);
             if (ShulkerRules.isUsableBox(stack)) {
                 List<ItemStack> detectedContents = detected != null ? detected.get(i) : null;
                 plan.boxes.add(new BoxInfo(plan.boxes.size(), i, stack,
@@ -107,7 +107,7 @@ public final class SortPlan {
             if (boxSlots.contains(i)) {
                 continue;
             }
-            ItemStack stack = inv.getStack(i);
+            ItemStack stack = inv.getInvStack(i);
             if (!stack.isEmpty() && !ShulkerRules.isShulkerBoxItem(stack)) {
                 poolItems.merge(new StackKey(stack), stack.getCount(), Integer::sum);
             }
@@ -1111,7 +1111,7 @@ public final class SortPlan {
             if (boxSlots.contains(i)) {
                 continue;
             }
-            ItemStack stack = inv.getStack(i);
+            ItemStack stack = inv.getInvStack(i);
             if (stack.isEmpty() || ShulkerRules.isShulkerBoxItem(stack)) {
                 continue;
             }
@@ -1212,8 +1212,9 @@ public final class SortPlan {
         }
 
         public void refreshContents(PlayerInventory inv) {
-            this.contents = ShulkerRules.readContents(inv.getStack(this.invIndex));
+            this.contents = ShulkerRules.readContents(inv.getInvStack(this.invIndex));
         }
     }
 }
+
 

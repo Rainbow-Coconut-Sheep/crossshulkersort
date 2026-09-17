@@ -19,8 +19,8 @@ public final class ReserveDebugTest {
         Class.forName(ServerSorter.class.getName(), true, ServerSorter.class.getClassLoader());
 
         Item[] check = new Item[]{Items.OAK_BOAT, Items.WATER_BUCKET,
-                Items.MUSIC_DISC_PIGSTEP, Items.BOW, Items.DIAMOND_SWORD,
-                Items.MINECART, Items.NETHERITE_AXE, Items.NETHERITE_PICKAXE,
+                Items.MUSIC_DISC_13, Items.BOW, Items.DIAMOND_SWORD,
+                Items.MINECART, Items.DIAMOND_AXE, Items.DIAMOND_PICKAXE,
                 Items.SHEARS, Items.FLINT_AND_STEEL, Items.OAK_SIGN, Items.SNOWBALL,
                 Items.ENDER_PEARL, Items.EGG, Items.STONE, Items.HOPPER};
         for (Item item : check) {
@@ -32,8 +32,8 @@ public final class ReserveDebugTest {
         Item[] singles64 = new Item[]{Items.OAK_BUTTON, Items.OAK_FENCE, Items.STONE, Items.DIRT,
                 Items.COBBLESTONE, Items.HOPPER, Items.BONE_BLOCK, Items.COMPOSTER};
         Item[] unstack = new Item[]{Items.OAK_BOAT, Items.WATER_BUCKET,
-                Items.MUSIC_DISC_PIGSTEP, Items.BOW, Items.DIAMOND_SWORD,
-                Items.MINECART, Items.NETHERITE_AXE, Items.NETHERITE_PICKAXE,
+                Items.MUSIC_DISC_13, Items.BOW, Items.DIAMOND_SWORD,
+                Items.MINECART, Items.DIAMOND_AXE, Items.DIAMOND_PICKAXE,
                 Items.SHEARS, Items.FLINT_AND_STEEL};
         PlayerInventory inventory = new PlayerInventory(null);
         java.util.Random r = new java.util.Random(7);
@@ -48,11 +48,11 @@ public final class ReserveDebugTest {
             contents.add(new ItemStack(unstack[(r.nextInt(unstack.length) + 3) % unstack.length], 1));
             ItemStack box = new ItemStack(Items.SHULKER_BOX);
             ShulkerRules.writeContents(box, contents);
-            inventory.setStack(10 + b, box);
+            inventory.setInvStack(10 + b, box);
         }
         // some loose stackables
-        inventory.setStack(0, new ItemStack(Items.STONE, 64));
-        inventory.setStack(1, new ItemStack(Items.DIRT, 32));
+        inventory.setInvStack(0, new ItemStack(Items.STONE, 64));
+        inventory.setInvStack(1, new ItemStack(Items.DIRT, 32));
         SortPlan plan = SortPlan.compute(inventory);
         System.out.println("boxes=" + plan.boxes.size() + " chosen=" + plan.chosen.size()
                 + " reservedBoxes=" + plan.reservedBoxes + " reservedInv=" + plan.reservedInv);
@@ -69,6 +69,7 @@ public final class ReserveDebugTest {
         }
     }
 }
+
 
 
 

@@ -45,15 +45,15 @@ public final class SortPlanFuzzTest {
                 }
                 ItemStack box = new ItemStack(Items.SHULKER_BOX);
                 ShulkerRules.writeContents(box, contents);
-                inv.setStack(invSlot, box);
+                inv.setInvStack(invSlot, box);
             }
             // loose items in remaining slots
             for (int i = boxCount; i < 36; i++) {
                 int invSlot = slots.get(i);
                 if (r.nextDouble() < 0.4) {
-                    inv.setStack(invSlot, randomStack(r, pool64, pool16, pool1));
+                    inv.setInvStack(invSlot, randomStack(r, pool64, pool16, pool1));
                 } else {
-                    inv.setStack(invSlot, ItemStack.EMPTY);
+                    inv.setInvStack(invSlot, ItemStack.EMPTY);
                 }
             }
             SortPlan plan;
@@ -73,7 +73,7 @@ public final class SortPlanFuzzTest {
                 boolean isBox = false;
                 for (SortPlan.BoxInfo b : plan.boxes) if (b.invIndex == i) { isBox = true; break; }
                 if (isBox) continue;
-                ItemStack st = inv.getStack(i);
+                ItemStack st = inv.getInvStack(i);
                 if (!st.isEmpty() && !ShulkerRules.isShulkerBoxItem(st)) pool.merge(new StackKey(st), st.getCount(), Integer::sum);
             }
             for (SortPlan.BoxInfo b : plan.boxes) {
@@ -162,6 +162,7 @@ public final class SortPlanFuzzTest {
         }
     }
 }
+
 
 
 

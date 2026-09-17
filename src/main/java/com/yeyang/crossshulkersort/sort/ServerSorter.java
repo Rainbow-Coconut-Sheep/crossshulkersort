@@ -78,7 +78,7 @@ public final class ServerSorter {
         PlayerInventory scan = player.inventory;
         Map<Integer, Boolean> wasFilled = new HashMap<>();
         for (int i = 0; i < 36; i++) {
-            ItemStack stack = scan.getStack(i);
+            ItemStack stack = scan.getInvStack(i);
             if (ShulkerRules.isUsableBox(stack)) {
                 wasFilled.put(i, !ShulkerRules.readContents(stack).isEmpty());
             }
@@ -98,14 +98,14 @@ public final class ServerSorter {
             if (r == 3) {
                 // a round applied bit-for-bit nothing: same state in means same plan
                 // out (deterministic), so further rounds cannot progress either
-                player.sendMessage(new TranslatableText("crossshulkersort.err.stuck"), false);
+                player.sendMessage(new TranslatableText("crossshulkersort.err.stuck"));
                 return;
             }
             break; // nothing left to do
         }
         if (!didWork) {
             if (eff.chatReport) {
-                player.sendMessage(new TranslatableText("crossshulkersort.done.nothing"), false);
+                player.sendMessage(new TranslatableText("crossshulkersort.done.nothing"));
             }
             return;
         }
@@ -113,7 +113,7 @@ public final class ServerSorter {
         int used = 0;
         int freed = 0;
         for (Map.Entry<Integer, Boolean> e : wasFilled.entrySet()) {
-            boolean nowFilled = !ShulkerRules.readContents(inv.getStack(e.getKey())).isEmpty();
+            boolean nowFilled = !ShulkerRules.readContents(inv.getInvStack(e.getKey())).isEmpty();
             if (nowFilled) {
                 used++;
             } else if (e.getValue()) {
@@ -121,7 +121,7 @@ public final class ServerSorter {
             }
         }
         if (eff.chatReport) {
-            player.sendMessage(new TranslatableText("crossshulkersort.done", used, freed, ""), false);
+            player.sendMessage(new TranslatableText("crossshulkersort.done", used, freed, ""));
         }
     }
 
@@ -129,17 +129,17 @@ public final class ServerSorter {
      * 3 applied bit-for-bit nothing (stuck - same state would plan identically) */
     private static int sortPass(ServerPlayerEntity player, boolean quiet) {
         PlayerInventory inv = player.inventory;
-        if (player.currentScreenHandler != player.playerScreenHandler) {
+        if (player.container != player.playerContainer) {
             // another container (e.g. an open shulker box) is showing: sorting now
             // would yank items out from under it, so refuse LOUDLY instead of dying
             // silently - a silent no-op here looks exactly like "Q does nothing"
-            player.sendMessage(new TranslatableText("crossshulkersort.err.container"), false);
+            player.sendMessage(new TranslatableText("crossshulkersort.err.container"));
             return 2;
         }
         if (!player.inventory.getCursorStack().isEmpty()) {
             // an item is on the cursor (e.g. another inventory mod was mid-action) -
             // rewriting slots now would strand it
-            player.sendMessage(new TranslatableText("crossshulkersort.err.carried"), false);
+            player.sendMessage(new TranslatableText("crossshulkersort.err.carried"));
             return 2;
         }
 
@@ -147,13 +147,13 @@ public final class ServerSorter {
         // contaminate the conservation baseline
         List<ItemStack> inventory = new ArrayList<>(36);
         for (int i = 0; i < 36; i++) {
-            inventory.add(inv.getStack(i).copy());
+            inventory.add(inv.getInvStack(i).copy());
         }
 
         SortPlan plan = SortPlan.compute(inv, null);
         if (!plan.hasWork) {
             if (!quiet) {
-                player.sendMessage(new TranslatableText("crossshulkersort.done.nothing"), false);
+                player.sendMessage(new TranslatableText("crossshulkersort.done.nothing"));
             }
             return 0;
         }
@@ -428,7 +428,7 @@ public final class ServerSorter {
                         dumpTypeTrace(plan, e.getKey(), before, after);
                     }
                 }
-                player.sendMessage(new TranslatableText("crossshulkersort.err.internal"), false);
+                player.sendMessage(new TranslatableText("crossshulkersort.err.internal"));
                 return 2; // abort without touching anything
             }
             // recompute `after` after trimming and re-verify (same accounting as above)
@@ -472,7 +472,7 @@ public final class ServerSorter {
                 }
             }
             if (!equal) {
-                player.sendMessage(new TranslatableText("crossshulkersort.err.internal"), false);
+                player.sendMessage(new TranslatableText("crossshulkersort.err.internal"));
                 return 2;
             }
         }
@@ -484,18 +484,18 @@ public final class ServerSorter {
             List<ItemStack> contents = new ArrayList<>(kept.get(b));
             contents.addAll(appended.get(b));
             contents.sort(SortPlan.SORT_ORDER);
-            ShulkerRules.writeContents(inv.getStack(box.invIndex), contents);
+            ShulkerRules.writeContents(inv.getInvStack(box.invIndex), contents);
         }
         // ---- apply: excess box components
         for (Map.Entry<Integer, List<ItemStack>> e : newBoxContents.entrySet()) {
-            ShulkerRules.writeContents(inv.getStack(e.getKey()), e.getValue());
+            ShulkerRules.writeContents(inv.getInvStack(e.getKey()), e.getValue());
         }
         // ---- apply: inventory
         for (int i = 0; i < 36; i++) {
             if (newCount[i] == 0) {
-                inv.setStack(i, ItemStack.EMPTY);
+                inv.setInvStack(i, ItemStack.EMPTY);
             } else if (newCount[i] > 0) {
-                inv.getStack(i).setCount(newCount[i]);
+                inv.getInvStack(i).setCount(newCount[i]);
             }
         }
 
@@ -504,13 +504,13 @@ public final class ServerSorter {
         // even if a future bug slips past the pre-checks.
         Map<StackKey, Integer> actual = new LinkedHashMap<>();
         for (int i = 0; i < 36; i++) {
-            ItemStack stack = inv.getStack(i);
+            ItemStack stack = inv.getInvStack(i);
             if (!stack.isEmpty()) {
                 actual.merge(countKey(stack), stack.getCount(), Integer::sum);
             }
         }
         for (BoxInfo box : plan.boxes) {
-            for (ItemStack stack : ShulkerRules.readContents(inv.getStack(box.invIndex))) {
+            for (ItemStack stack : ShulkerRules.readContents(inv.getInvStack(box.invIndex))) {
                 if (!stack.isEmpty()) {
                     actual.merge(countKey(stack), stack.getCount(), Integer::sum);
                 }
@@ -545,7 +545,7 @@ public final class ServerSorter {
             com.yeyang.crossshulkersort.CrossShulkerSortClient.logSevere(
                     "[CSSort] POST-APPLY MISMATCH - rolling back everything");
             for (int i = 0; i < 36; i++) {
-                inv.setStack(i, inventory.get(i).copy());
+                inv.setInvStack(i, inventory.get(i).copy());
             }
             for (BoxInfo box : plan.boxes) {
                 List<ItemStack> contents = new ArrayList<>();
@@ -554,23 +554,23 @@ public final class ServerSorter {
                         contents.add(stack.copy());
                     }
                 }
-                ShulkerRules.writeContents(inv.getStack(box.invIndex), contents);
+                ShulkerRules.writeContents(inv.getInvStack(box.invIndex), contents);
             }
             // NOTE (<=1.16 branch): no syncState() here - content updates suffice.
-        player.playerScreenHandler.sendContentUpdates();
-            player.sendMessage(new TranslatableText("crossshulkersort.err.internal"), false);
+        player.playerContainer.sendContentUpdates();
+            player.sendMessage(new TranslatableText("crossshulkersort.err.internal"));
             return 2; // state restored to the pre-sort snapshot
         }
 
         // NOTE (<=1.16 branch): no syncState() here - content updates suffice.
-        player.playerScreenHandler.sendContentUpdates();
+        player.playerContainer.sendContentUpdates();
         List<ItemStack> liveInv = new ArrayList<>(36);
         for (int i = 0; i < 36; i++) {
-            liveInv.add(inv.getStack(i).copy());
+            liveInv.add(inv.getInvStack(i).copy());
         }
         List<List<ItemStack>> liveBoxes = new ArrayList<>(plan.boxes.size());
         for (BoxInfo bx : plan.boxes) {
-            liveBoxes.add(ShulkerRules.readContents(inv.getStack(bx.invIndex)));
+            liveBoxes.add(ShulkerRules.readContents(inv.getInvStack(bx.invIndex)));
         }
         if (signature(liveInv, liveBoxes).equals(sigBefore)) {
             return 3;
@@ -696,6 +696,7 @@ public final class ServerSorter {
         return new StackKey(stack);
     }
 }
+
 
 
 

@@ -187,12 +187,12 @@ public final class ServerSorterRegressionTest {
                 new ItemStack(Items.DIRT, 64), new ItemStack(Items.COBBLESTONE, 64),
                 new ItemStack(Items.GRANITE, 64), new ItemStack(Items.DIORITE, 64));
         PlayerInventory inventory = new PlayerInventory(null);
-        inventory.setStack(0, box(home));
-        inventory.setStack(1, box(nonhome));
-        inventory.setStack(2, dropper(43));
+        inventory.setInvStack(0, box(home));
+        inventory.setInvStack(1, box(nonhome));
+        inventory.setInvStack(2, dropper(43));
         List<ItemStack> inventoryBaseline = new ArrayList<>();
         for (int i = 0; i < 36; i++) {
-            inventoryBaseline.add(inventory.getStack(i).copy());
+            inventoryBaseline.add(inventory.getInvStack(i).copy());
         }
         List<ItemStack> homeBaseline = ShulkerRules.readContents(inventoryBaseline.get(0));
         List<ItemStack> nonhomeBaseline = ShulkerRules.readContents(inventoryBaseline.get(1));
@@ -216,8 +216,8 @@ public final class ServerSorterRegressionTest {
         check(count(nonhomeBaseline, dropperKey) == 21, "fixture nonhome must contain 21 droppers");
         check(pool.getOrDefault(dropperKey, 0) == 213, "source snapshot pool must contain 213 droppers");
         for (int slot = 0; slot < 2; slot++) {
-            check(ShulkerRules.isEligibleBox(inventory.getStack(slot)), "fixture box must be eligible: " + slot);
-            check(!ShulkerRules.isLockedFull(inventory.getStack(slot)), "fixture box must not be locked: " + slot);
+            check(ShulkerRules.isEligibleBox(inventory.getInvStack(slot)), "fixture box must be eligible: " + slot);
+            check(!ShulkerRules.isLockedFull(inventory.getInvStack(slot)), "fixture box must not be locked: " + slot);
         }
         SortPlan plan = SortPlan.compute(inventory);
         check(plan.boxes.size() == 2, "planner must detect two eligible boxes");
@@ -245,7 +245,7 @@ public final class ServerSorterRegressionTest {
                 + ", chosen=" + plan.chosen.size() + ", dropperPool=" + pool.get(dropperKey)
                 + ", homeQuota=" + homeQuota + ", nonhomeQuota=" + nonhomeQuota
                 + ", quotaSum=" + quotaSum + ", sourceHome=" + sourceHome
-                + ", sourceNonhome=" + sourceNonhome + ", loose=" + inventory.getStack(2).getCount());
+                + ", sourceNonhome=" + sourceNonhome + ", loose=" + inventory.getInvStack(2).getCount());
         check(quotaSum <= 213, "dropper quota exceeds source pool: " + quotaSum);
         for (Map.Entry<StackKey, Integer> entry : quotaTotals.entrySet()) {
             check(entry.getValue() >= 0 && entry.getValue() <= pool.getOrDefault(entry.getKey(), 0),
@@ -264,23 +264,23 @@ public final class ServerSorterRegressionTest {
         }
         check(sourceHome == 149, "planner home snapshot must remain 149, got " + sourceHome);
         check(sourceNonhome == 21, "planner nonhome snapshot must remain 21, got " + sourceNonhome);
-        check(sourceHome + sourceNonhome + inventory.getStack(2).getCount() == 213,
+        check(sourceHome + sourceNonhome + inventory.getInvStack(2).getCount() == 213,
                 "planner source snapshots plus loose droppers must remain 213");
         check(count(homeBaseline, dropperKey) == 149, "independent home baseline changed");
         check(count(nonhomeBaseline, dropperKey) == 21, "independent nonhome baseline changed");
-        check(count(ShulkerRules.readContents(inventory.getStack(0)), dropperKey) == 149,
+        check(count(ShulkerRules.readContents(inventory.getInvStack(0)), dropperKey) == 149,
                 "live home contents changed during planning");
-        check(count(ShulkerRules.readContents(inventory.getStack(1)), dropperKey) == 21,
+        check(count(ShulkerRules.readContents(inventory.getInvStack(1)), dropperKey) == 21,
                 "live nonhome contents changed during planning");
         for (int i = 0; i < 36; i++) {
-            check(SortPlan.sameStackExact(inventory.getStack(i), inventoryBaseline.get(i)),
+            check(SortPlan.sameStackExact(inventory.getInvStack(i), inventoryBaseline.get(i)),
                     "planning changed inventory item/components/count at slot " + i);
         }
     }
 
     private static void defragPullsHopperHome() {
         Item[] singles = new Item[]{Items.OAK_BUTTON, Items.OAK_FENCE, Items.SPRUCE_FENCE_GATE,
-                Items.SOUL_SAND, Items.BONE, Items.OAK_TRAPDOOR, Items.OAK_SIGN, Items.TARGET,
+                Items.SOUL_SAND, Items.BONE, Items.OAK_TRAPDOOR, Items.OAK_SIGN, Items.DISPENSER,
                 Items.OAK_SIGN, Items.GUNPOWDER, Items.GOLD_NUGGET, Items.PHANTOM_MEMBRANE,
                 Items.LEAD, Items.OAK_DOOR, Items.OAK_SLAB, Items.OAK_PRESSURE_PLATE,
                 Items.POTATO, Items.IRON_NUGGET, Items.SNOWBALL, Items.ROTTEN_FLESH,
@@ -296,8 +296,8 @@ public final class ServerSorterRegressionTest {
                 new ItemStack(Items.HOPPER, 64), new ItemStack(Items.HOPPER, 57),
                 new ItemStack(Items.DIRT, 64)));
         PlayerInventory inventory = new PlayerInventory(null);
-        inventory.setStack(0, box(home));
-        inventory.setStack(1, box(other));
+        inventory.setInvStack(0, box(home));
+        inventory.setInvStack(1, box(other));
         SortPlan plan = SortPlan.compute(inventory);
         check(plan.chosen.size() == 2, "defrag fixture must choose both boxes, got " + plan.chosen.size());
         StackKey hopperKey = new StackKey(new ItemStack(Items.HOPPER, 1));
@@ -328,9 +328,9 @@ public final class ServerSorterRegressionTest {
 
     private static void topUpFillsPartialFromLoose() {
         Item[] singles = new Item[]{Items.OAK_BUTTON, Items.OAK_FENCE, Items.SPRUCE_FENCE_GATE,
-                Items.SOUL_SAND, Items.BONE, Items.OAK_TRAPDOOR, Items.OAK_SIGN, Items.TARGET,
+                Items.SOUL_SAND, Items.BONE, Items.OAK_TRAPDOOR, Items.OAK_SIGN, Items.DISPENSER,
                 Items.OAK_SIGN, Items.GUNPOWDER, Items.GOLD_NUGGET, Items.PHANTOM_MEMBRANE,
-                Items.LEAD, Items.OAK_BOAT, Items.MUSIC_DISC_PIGSTEP, Items.DIAMOND_SWORD,
+                Items.LEAD, Items.OAK_BOAT, Items.MUSIC_DISC_13, Items.DIAMOND_SWORD,
                 Items.POTATO, Items.IRON_NUGGET, Items.SNOWBALL, Items.ROTTEN_FLESH,
                 Items.DETECTOR_RAIL, Items.ACTIVATOR_RAIL, Items.OAK_DOOR, Items.OAK_SLAB,
                 Items.OAK_STAIRS, Items.OAK_PRESSURE_PLATE};
@@ -339,8 +339,8 @@ public final class ServerSorterRegressionTest {
             home.add(new ItemStack(single, 1));
         }
         PlayerInventory inventory = new PlayerInventory(null);
-        inventory.setStack(0, box(home));
-        inventory.setStack(2, new ItemStack(Items.TRIPWIRE_HOOK, 36));
+        inventory.setInvStack(0, box(home));
+        inventory.setInvStack(2, new ItemStack(Items.TRIPWIRE_HOOK, 36));
         SortPlan plan = SortPlan.compute(inventory);
         check(plan.chosen.size() == 1, "top-up fixture must choose one box, got " + plan.chosen.size());
         StackKey hookKey = new StackKey(new ItemStack(Items.TRIPWIRE_HOOK, 1));
@@ -362,8 +362,8 @@ public final class ServerSorterRegressionTest {
             other.add(new ItemStack(Items.STONE, 64));
         }
         PlayerInventory inventory = new PlayerInventory(null);
-        inventory.setStack(0, box(mixed));
-        inventory.setStack(1, box(other));
+        inventory.setInvStack(0, box(mixed));
+        inventory.setInvStack(1, box(other));
         SortPlan plan = SortPlan.compute(inventory);
         check(plan.chosen.size() == 2, "fixture must choose both boxes, got " + plan.chosen.size());
         check(plan.reservedBoxes == 1, "one trailing box must reserve for unstackables, got " + plan.reservedBoxes);
@@ -430,8 +430,8 @@ public final class ServerSorterRegressionTest {
                 new ItemStack(Items.DIAMOND_SWORD, 1), new ItemStack(Items.DIAMOND_SWORD, 1),
                 new ItemStack(Items.STONE, 64), new ItemStack(Items.STONE, 64)));
         PlayerInventory inventory = new PlayerInventory(null);
-        inventory.setStack(5, box(full));
-        inventory.setStack(1, box(holder));
+        inventory.setInvStack(5, box(full));
+        inventory.setInvStack(1, box(holder));
         SortPlan plan = SortPlan.compute(inventory);
         check(plan.chosen.size() == 2, "fixture must choose both boxes, got " + plan.chosen.size());
         check(plan.reservedBoxes == 1, "one box must reserve, got " + plan.reservedBoxes);
@@ -489,11 +489,11 @@ public final class ServerSorterRegressionTest {
             e.add(new ItemStack(Items.STONE, 64));
         }
         PlayerInventory inventory = new PlayerInventory(null);
-        inventory.setStack(0, box(a));
-        inventory.setStack(1, box(b));
-        inventory.setStack(2, box(c));
-        inventory.setStack(3, box(d));
-        inventory.setStack(4, box(e));
+        inventory.setInvStack(0, box(a));
+        inventory.setInvStack(1, box(b));
+        inventory.setInvStack(2, box(c));
+        inventory.setInvStack(3, box(d));
+        inventory.setInvStack(4, box(e));
         SortPlan plan = SortPlan.compute(inventory);
         check(plan.chosen.size() == 5, "fixture must choose all five boxes, got " + plan.chosen.size());
         StackKey bulk = new StackKey(new ItemStack(Items.HOPPER, 1));
@@ -530,9 +530,9 @@ public final class ServerSorterRegressionTest {
             c.add(new ItemStack(Items.STONE, 64));
         }
         PlayerInventory inventory = new PlayerInventory(null);
-        inventory.setStack(0, box(a));
-        inventory.setStack(1, box(b));
-        inventory.setStack(2, box(c));
+        inventory.setInvStack(0, box(a));
+        inventory.setInvStack(1, box(b));
+        inventory.setInvStack(2, box(c));
         SortPlan plan = SortPlan.compute(inventory);
         check(plan.chosen.size() == 3, "fixture must choose all three boxes, got " + plan.chosen.size());
         StackKey bulk = new StackKey(new ItemStack(Items.HOPPER, 1));
@@ -642,6 +642,7 @@ public final class ServerSorterRegressionTest {
         }
     }
 }
+
 
 
 

@@ -76,7 +76,7 @@ public class CrossShulkerSortClient implements ClientModInitializer {
     /** Sent when the Q button is pressed; the server does the actual sorting. */
     public static void requestSort() {
         ClientSidePacketRegistry.INSTANCE.sendToServer(CrossShulkerSort.SORT_REQUEST,
-                new net.minecraft.network.PacketByteBuf(io.netty.buffer.Unpooled.buffer()));
+                new net.minecraft.util.PacketByteBuf(io.netty.buffer.Unpooled.buffer()));
     }
 }
 
