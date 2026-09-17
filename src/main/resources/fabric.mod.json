@@ -24,7 +24,7 @@
 	"depends": {
 		"minecraft": ">=1.18 <1.18.1",
 		"fabricloader": ">=0.14.0",
-		"fabric-api": "*"
+		"fabric-networking-api-v1": "*"
 	},
 	"suggests": {
 		"quickshulker": "*",
