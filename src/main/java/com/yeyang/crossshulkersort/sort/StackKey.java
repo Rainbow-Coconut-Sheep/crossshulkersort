@@ -25,11 +25,12 @@ public final class StackKey {
     @Override
     public boolean equals(Object obj) {
         return obj instanceof StackKey other && ItemStack.areItemsEqual(this.stack, other.stack)
-                && Objects.equals(this.stack.getNbt(), other.stack.getNbt());
+                && Objects.equals(this.stack.getTag(), other.stack.getTag());
     }
 
     @Override
     public int hashCode() {
-        return 31 * this.stack.getItem().hashCode() + Objects.hashCode(this.stack.getNbt());
+        return 31 * this.stack.getItem().hashCode() + Objects.hashCode(this.stack.getTag());
     }
 }
+

@@ -52,7 +52,7 @@ public final class ShulkerRules {
         } else if (stack.getItem() != Items.SHULKER_BOX) {
             return false;
         }
-        NbtCompound tag = stack.getNbt();
+        NbtCompound tag = stack.getTag();
         if (tag == null) {
             return true;
         }
@@ -76,7 +76,7 @@ public final class ShulkerRules {
 
     public static List<ItemStack> readContents(ItemStack box) {
         List<ItemStack> out = new ArrayList<>();
-        NbtCompound tag = box.getSubNbt("BlockEntityTag");
+        NbtCompound tag = box.getSubTag("BlockEntityTag");
         if (tag == null || !tag.contains("Items", NbtElement.LIST_TYPE)) {
             return out;
         }
@@ -104,9 +104,9 @@ public final class ShulkerRules {
             list.add(c);
         }
         if (list.isEmpty()) {
-            box.removeSubNbt("BlockEntityTag");
+            box.removeSubTag("BlockEntityTag");
         } else {
-            box.getOrCreateSubNbt("BlockEntityTag").put("Items", list);
+            box.getOrCreateSubTag("BlockEntityTag").put("Items", list);
         }
     }
 
@@ -135,3 +135,4 @@ public final class ShulkerRules {
         return total >= BOX_SLOTS * contents.get(0).getMaxCount();
     }
 }
+

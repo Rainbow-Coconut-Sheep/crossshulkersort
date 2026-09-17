@@ -32,11 +32,11 @@ public final class StackKeyHashTest {
         System.out.println("read size=" + read.size());
         for (ItemStack s : read) {
             StackKey k = new StackKey(s);
-            System.out.println("read stack count=" + s.getCount() + " equalsFresh=" + k.equals(ka) + " hash=" + k.hashCode() + " nbt=" + s.getNbt());
+            System.out.println("read stack count=" + s.getCount() + " equalsFresh=" + k.equals(ka) + " hash=" + k.hashCode() + " nbt=" + s.getTag());
         }
         ItemStack a1 = a.copy();
         a1.setCount(1);
-        System.out.println("fresh nbt=" + a1.getNbt());
+        System.out.println("fresh nbt=" + a1.getTag());
 
         // copy sharing test: mutate original, check key hash stability
         ItemStack orig = new ItemStack(Items.STONE, 64);
@@ -87,3 +87,4 @@ public final class StackKeyHashTest {
         System.out.println("hash contract violations=" + violations);
     }
 }
+

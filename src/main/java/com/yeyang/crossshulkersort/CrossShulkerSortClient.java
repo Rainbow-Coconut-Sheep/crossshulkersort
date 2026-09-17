@@ -34,7 +34,7 @@ public class CrossShulkerSortClient implements ClientModInitializer {
             SortPlan.setSortOrder(Comparator
                     .comparing((ItemStack s) -> net.minecraft.util.registry.Registry.ITEM
                             .getId(s.getItem()).toString())
-                    .thenComparing(s -> java.util.Objects.hashCode(s.getNbt()))
+                    .thenComparing(s -> java.util.Objects.hashCode(s.getTag()))
                     .thenComparing(s -> -s.getCount()));
         }
     }
@@ -53,3 +53,4 @@ public class CrossShulkerSortClient implements ClientModInitializer {
                 net.fabricmc.fabric.api.networking.v1.PacketByteBufs.empty());
     }
 }
+

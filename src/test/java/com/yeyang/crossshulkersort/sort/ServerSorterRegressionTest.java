@@ -139,7 +139,7 @@ public final class ServerSorterRegressionTest {
 
     private static void differentComponents() {
         ItemStack namedHome = dropper(40);
-        namedHome.getOrCreateSubNbt("display").putString("Name", "{\"text\":\"Named dropper\"}");
+        namedHome.getOrCreateSubTag("display").putString("Name", "{\"text\":\"Named dropper\"}");
         ItemStack namedMoved = namedHome.copy();
         namedMoved.setCount(15);
         StackKey namedKey = new StackKey(namedHome);
@@ -635,3 +635,4 @@ public final class ServerSorterRegressionTest {
         }
     }
 }
+

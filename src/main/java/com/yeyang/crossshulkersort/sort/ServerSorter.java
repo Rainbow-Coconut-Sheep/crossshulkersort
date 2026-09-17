@@ -684,11 +684,11 @@ public final class ServerSorter {
     private static StackKey countKey(ItemStack stack) {
         if (ShulkerRules.isShulkerBoxItem(stack)) {
             ItemStack stripped = stack.copy();
-            NbtCompound tag = stripped.getNbt();
+            NbtCompound tag = stripped.getTag();
             if (tag != null) {
                 tag.remove("BlockEntityTag");
                 if (tag.isEmpty()) {
-                    stripped.setNbt(null);
+                    stripped.setTag(null);
                 }
             }
             return new StackKey(stripped);
@@ -696,4 +696,5 @@ public final class ServerSorter {
         return new StackKey(stack);
     }
 }
+
 
