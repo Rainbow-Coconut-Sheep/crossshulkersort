@@ -2,8 +2,6 @@ package com.yeyang.crossshulkersort.sort;
 
 import net.minecraft.Bootstrap;
 import net.minecraft.SharedConstants;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -47,7 +45,7 @@ public final class SortPlanFuzzTest {
                     contents.add(randomStack(r, pool64, pool16, pool1));
                 }
                 ItemStack box = new ItemStack(Items.SHULKER_BOX);
-                box.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(contents));
+                ShulkerRules.writeContents(box, contents);
                 inv.setStack(invSlot, box);
             }
             // loose items in remaining slots

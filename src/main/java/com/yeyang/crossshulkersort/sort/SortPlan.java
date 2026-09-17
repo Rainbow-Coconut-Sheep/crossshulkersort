@@ -40,7 +40,7 @@ public final class SortPlan {
     /** Active stack order; the client injects Item Scroller's mirrored comparator. */
     public static Comparator<ItemStack> SORT_ORDER = Comparator
             .comparing((ItemStack s) -> Registries.ITEM.getId(s.getItem()).toString())
-            .thenComparing(s -> s.getComponents().hashCode())
+            .thenComparing(s -> java.util.Objects.hashCode(s.getNbt()))
             .thenComparing(s -> -s.getCount());
 
     /** Called from the client entrypoint so in-game sorts mirror Item Scroller's order. */
@@ -1145,7 +1145,8 @@ public final class SortPlan {
     }
 
     public static boolean sameStackExact(ItemStack a, ItemStack b) {
-        return a.getCount() == b.getCount() && ItemStack.areItemsAndComponentsEqual(a, b);
+        return a.getCount() == b.getCount() && ItemStack.areItemsEqual(a, b)
+                && java.util.Objects.equals(a.getNbt(), b.getNbt());
     }
 
     public static boolean isUnsorted(List<ItemStack> contents) {

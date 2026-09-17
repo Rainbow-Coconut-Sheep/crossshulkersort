@@ -34,7 +34,7 @@ public class CrossShulkerSortClient implements ClientModInitializer {
             SortPlan.setSortOrder(Comparator
                     .comparing((ItemStack s) -> net.minecraft.registry.Registries.ITEM
                             .getId(s.getItem()).toString())
-                    .thenComparing(s -> s.getComponents().hashCode())
+                    .thenComparing(s -> java.util.Objects.hashCode(s.getNbt()))
                     .thenComparing(s -> -s.getCount()));
         }
     }
@@ -49,6 +49,7 @@ public class CrossShulkerSortClient implements ClientModInitializer {
 
     /** Sent when the Q button is pressed; the server does the actual sorting. */
     public static void requestSort() {
-        ClientPlayNetworking.send(CrossShulkerSort.SortRequestPayload.INSTANCE);
+        ClientPlayNetworking.send(CrossShulkerSort.SORT_REQUEST,
+                net.fabricmc.fabric.api.networking.v1.PacketByteBufs.empty());
     }
 }

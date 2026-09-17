@@ -2,6 +2,8 @@ package com.yeyang.crossshulkersort.sort;
 
 import net.minecraft.item.ItemStack;
 
+import java.util.Objects;
+
 /**
  * Identity of an item stack ignoring its count (same item + same data components).
  * Replacement for Item Scroller's removed {@code ItemType}, same semantics.
@@ -11,7 +13,9 @@ public final class StackKey {
     private final ItemStack stack;
 
     public StackKey(ItemStack stack) {
-        this.stack = stack.copyWithCount(1);
+        ItemStack c = stack.copy();
+        c.setCount(1);
+        this.stack = c;
     }
 
     public ItemStack stack() {
@@ -20,12 +24,12 @@ public final class StackKey {
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof StackKey other && ItemStack.areItemsAndComponentsEqual(this.stack, other.stack);
+        return obj instanceof StackKey other && ItemStack.areItemsEqual(this.stack, other.stack)
+                && Objects.equals(this.stack.getNbt(), other.stack.getNbt());
     }
 
     @Override
     public int hashCode() {
-        int hash = this.stack.getItem().hashCode();
-        return 31 * hash + this.stack.getComponents().hashCode();
+        return 31 * this.stack.getItem().hashCode() + Objects.hashCode(this.stack.getNbt());
     }
 }

@@ -11,14 +11,6 @@ base {
 
 repositories {
     maven {
-        url = 'https://masa.dy.fi/maven/sakura-ryoko'
-        content { includeGroupAndSubgroups('fi.dy.masa') }
-    }
-    maven {
-        url = 'https://maven.fallenbreath.me/releases'
-        content { includeGroupAndSubgroups('me.fallenbreath') }
-    }
-    maven {
         url = 'https://maven.terraformersmc.com/releases/'
         content { includeGroup('com.terraformersmc') }
     }
@@ -36,27 +28,26 @@ dependencies {
     // all of these are optional at runtime (see fabric.mod.json suggests + soft loading)
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-    // Optional integration (client-only, for mirroring Item Scroller's sort settings)
-    modImplementation "fi.dy.masa.itemscroller:itemscroller-fabric-1.21:${project.itemscroller_version}"
-    modImplementation "fi.dy.masa.malilib:malilib-fabric-1.21:${project.malilib_version}"
+    // NOTE (1.20.1 branch): no Item Scroller integration - masa 0.20.0 has no
+    // inventory sorting to mirror, so ItemScrollerSortOrder is vanilla id order.
 
     // Config screen (soft deps: only loaded when ModMenu/Cloth Config are installed)
-    modImplementation "com.terraformersmc:modmenu:11.0.3"
-    modImplementation "me.shedaniel.cloth:cloth-config-fabric:15.0.140"
+    modImplementation "com.terraformersmc:modmenu:7.2.2"
+    modImplementation "me.shedaniel.cloth:cloth-config-fabric:11.1.136"
 }
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(17)
     }
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
     withSourcesJar()
 }
 
 tasks.withType(JavaCompile).configureEach {
     it.options.encoding = 'UTF-8'
-    it.options.release = 21
+    it.options.release = 17
 }
 
 tasks.register('regressionTest', JavaExec) {
@@ -66,7 +57,7 @@ tasks.register('regressionTest', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.yeyang.crossshulkersort.sort.ServerSorterRegressionTest'
     javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(25)
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
@@ -77,7 +68,7 @@ tasks.register('hashTest', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.yeyang.crossshulkersort.sort.StackKeyHashTest'
     javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(25)
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
@@ -88,7 +79,7 @@ tasks.register('fuzzTest', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.yeyang.crossshulkersort.sort.SortPlanFuzzTest'
     javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(25)
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
@@ -99,7 +90,7 @@ tasks.register('reserveDebug', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.yeyang.crossshulkersort.sort.ReserveDebugTest'
     javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(25)
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
 

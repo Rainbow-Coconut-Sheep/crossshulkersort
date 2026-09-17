@@ -2,9 +2,6 @@ package com.yeyang.crossshulkersort.sort;
 
 import net.minecraft.Bootstrap;
 import net.minecraft.SharedConstants;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ContainerComponent;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -30,16 +27,18 @@ public final class StackKeyHashTest {
         // via box read
         List<ItemStack> contents = List.of(new ItemStack(Items.DROPPER, 64), new ItemStack(Items.DROPPER, 21));
         ItemStack box = new ItemStack(Items.SHULKER_BOX);
-        box.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(contents));
+        ShulkerRules.writeContents(box, contents);
         List<ItemStack> read = ShulkerRules.readContents(box);
         System.out.println("read size=" + read.size());
         for (ItemStack s : read) {
             StackKey k = new StackKey(s);
-            System.out.println("read stack count=" + s.getCount() + " equalsFresh=" + k.equals(ka) + " hash=" + k.hashCode() + " components=" + s.getComponents() + " compHash=" + s.getComponents().hashCode());
+            System.out.println("read stack count=" + s.getCount() + " equalsFresh=" + k.equals(ka) + " hash=" + k.hashCode() + " nbt=" + s.getNbt());
         }
-        System.out.println("fresh components=" + a.copyWithCount(1).getComponents() + " hash=" + a.copyWithCount(1).getComponents().hashCode());
+        ItemStack a1 = a.copy();
+        a1.setCount(1);
+        System.out.println("fresh nbt=" + a1.getNbt());
 
-        // copyWithCount sharing test: mutate original, check key hash stability
+        // copy sharing test: mutate original, check key hash stability
         ItemStack orig = new ItemStack(Items.STONE, 64);
         StackKey kOrig = new StackKey(orig);
         int hBefore = kOrig.hashCode();
@@ -47,15 +46,15 @@ public final class StackKeyHashTest {
         int hAfter = kOrig.hashCode();
         System.out.println("mutate count hashBefore=" + hBefore + " hashAfter=" + hAfter + " stable=" + (hBefore==hAfter));
 
-        // component mutation sharing test
+        // nbt mutation sharing test
         ItemStack boxStack = new ItemStack(Items.SHULKER_BOX);
-        boxStack.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(List.of(new ItemStack(Items.STONE, 5))));
+        ShulkerRules.writeContents(boxStack, List.of(new ItemStack(Items.STONE, 5)));
         StackKey kBox = new StackKey(boxStack);
         int hbBefore = kBox.hashCode();
         // mutate original box contents
-        boxStack.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(List.of(new ItemStack(Items.DIRT, 7))));
+        ShulkerRules.writeContents(boxStack, List.of(new ItemStack(Items.DIRT, 7)));
         int hbAfter = kBox.hashCode();
-        System.out.println("mutate box components hashBefore=" + hbBefore + " hashAfter=" + hbAfter + " stable=" + (hbBefore==hbAfter) + " equalsAfterMutate=" + kBox.equals(new StackKey(boxStack)));
+        System.out.println("mutate box nbt hashBefore=" + hbBefore + " hashAfter=" + hbAfter + " stable=" + (hbBefore==hbAfter) + " equalsAfterMutate=" + kBox.equals(new StackKey(boxStack)));
 
         // random fuzz for hash/equals contract across many stacks
         Item[] items = new Item[]{Items.DROPPER, Items.STONE, Items.DIRT, Items.ENDER_PEARL, Items.DIAMOND_SWORD, Items.HOPPER, Items.COMPOSTER, Items.BONE_BLOCK};
@@ -68,7 +67,7 @@ public final class StackKeyHashTest {
             // sometimes put through box round-trip
             if (r.nextBoolean()) {
                 ItemStack bx = new ItemStack(Items.SHULKER_BOX);
-                bx.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(List.of(s)));
+                ShulkerRules.writeContents(bx, List.of(s));
                 List<ItemStack> rd = ShulkerRules.readContents(bx);
                 if (!rd.isEmpty()) s = rd.get(0);
             }

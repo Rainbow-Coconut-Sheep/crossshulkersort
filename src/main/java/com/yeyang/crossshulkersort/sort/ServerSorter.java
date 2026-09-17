@@ -1,13 +1,11 @@
 package com.yeyang.crossshulkersort.sort;
 
 import com.yeyang.crossshulkersort.sort.SortPlan.BoxInfo;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import net.minecraft.util.collection.DefaultedList;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -483,29 +481,11 @@ public final class ServerSorter {
             List<ItemStack> contents = new ArrayList<>(kept.get(b));
             contents.addAll(appended.get(b));
             contents.sort(SortPlan.SORT_ORDER);
-            ItemStack boxStack = inv.getStack(box.invIndex);
-            if (contents.isEmpty()) {
-                boxStack.set(DataComponentTypes.CONTAINER, ContainerComponent.DEFAULT);
-            } else {
-                DefaultedList<ItemStack> slots = DefaultedList.ofSize(ShulkerRules.BOX_SLOTS, ItemStack.EMPTY);
-                for (int s = 0; s < Math.min(contents.size(), ShulkerRules.BOX_SLOTS); s++) {
-                    slots.set(s, contents.get(s));
-                }
-                boxStack.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(slots));
-            }
+            ShulkerRules.writeContents(inv.getStack(box.invIndex), contents);
         }
         // ---- apply: excess box components
         for (Map.Entry<Integer, List<ItemStack>> e : newBoxContents.entrySet()) {
-            ItemStack box = inv.getStack(e.getKey());
-            if (e.getValue().isEmpty()) {
-                box.set(DataComponentTypes.CONTAINER, ContainerComponent.DEFAULT);
-            } else {
-                DefaultedList<ItemStack> slots = DefaultedList.ofSize(ShulkerRules.BOX_SLOTS, ItemStack.EMPTY);
-                for (int s = 0; s < Math.min(e.getValue().size(), ShulkerRules.BOX_SLOTS); s++) {
-                    slots.set(s, e.getValue().get(s));
-                }
-                box.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(slots));
-            }
+            ShulkerRules.writeContents(inv.getStack(e.getKey()), e.getValue());
         }
         // ---- apply: inventory
         for (int i = 0; i < 36; i++) {
@@ -571,16 +551,7 @@ public final class ServerSorter {
                         contents.add(stack.copy());
                     }
                 }
-                ItemStack boxStack = inv.getStack(box.invIndex);
-                if (contents.isEmpty()) {
-                    boxStack.set(DataComponentTypes.CONTAINER, ContainerComponent.DEFAULT);
-                } else {
-                    DefaultedList<ItemStack> slots = DefaultedList.ofSize(ShulkerRules.BOX_SLOTS, ItemStack.EMPTY);
-                    for (int s = 0; s < Math.min(contents.size(), ShulkerRules.BOX_SLOTS); s++) {
-                        slots.set(s, contents.get(s));
-                    }
-                    boxStack.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(slots));
-                }
+                ShulkerRules.writeContents(inv.getStack(box.invIndex), contents);
             }
             player.playerScreenHandler.syncState();
         player.playerScreenHandler.sendContentUpdates();
@@ -700,13 +671,19 @@ public final class ServerSorter {
 
     /**
      * Conservation identity for counting: shulker box items are keyed WITHOUT their
-     * container component - the sort legitimately rewrites box contents, and counting
-     * the box stack by its full component hash would report a phantom loss + gain.
+     * container NBT - the sort legitimately rewrites box contents, and counting
+     * the box stack by its full NBT hash would report a phantom loss + gain.
      */
     private static StackKey countKey(ItemStack stack) {
         if (ShulkerRules.isShulkerBoxItem(stack)) {
             ItemStack stripped = stack.copy();
-            stripped.remove(DataComponentTypes.CONTAINER);
+            NbtCompound tag = stripped.getNbt();
+            if (tag != null) {
+                tag.remove("BlockEntityTag");
+                if (tag.isEmpty()) {
+                    stripped.setNbt(null);
+                }
+            }
             return new StackKey(stripped);
         }
         return new StackKey(stack);
