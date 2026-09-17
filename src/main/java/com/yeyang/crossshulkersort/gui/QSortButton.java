@@ -4,7 +4,6 @@ import com.yeyang.crossshulkersort.CrossShulkerSortClient;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
@@ -25,19 +24,19 @@ public class QSortButton extends ButtonWidget {
     private double grabOffsetY;
 
     public QSortButton(int x, int y, int baseX, int baseY) {
+        // NOTE (<=1.19.2): no Tooltip class and no narration ctor on this version;
+        // the button label itself ("Q") stays readable without a tooltip.
         super(x, y, 10, 10, Text.translatable("crossshulkersort.btn.label"),
-                b -> com.yeyang.crossshulkersort.CrossShulkerSortClient.requestSort(),
-                DEFAULT_NARRATION_SUPPLIER);
+                b -> com.yeyang.crossshulkersort.CrossShulkerSortClient.requestSort());
         this.baseX = baseX;
         this.baseY = baseY;
-        setTooltip(Tooltip.of(Text.translatable("crossshulkersort.btn.tooltip")));
     }
 
     /** Small vanilla-style frame with the "Q" label drawn centered. */
     @Override
     public void renderButton(MatrixStack matrices, int mouseX, int mouseY, float delta) {
-        int x = getX();
-        int y = getY();
+        int x = this.x;
+        int y = this.y;
         int bg = this.active ? (this.isHovered() ? 0xFFA0A0A0 : 0xFF888888) : 0xFF555555;
         DrawableHelper.fill(matrices, x, y, x + this.width, y + this.height, 0xFF000000);
         DrawableHelper.fill(matrices, x, y, x + this.width, y + 1, bg);
@@ -52,8 +51,8 @@ public class QSortButton extends ButtonWidget {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (this.visible && this.active && button == 0 && Screen.hasShiftDown()) {
             this.dragging = true;
-            this.grabOffsetX = mouseX - this.getX();
-            this.grabOffsetY = mouseY - this.getY();
+            this.grabOffsetX = mouseX - this.x;
+            this.grabOffsetY = mouseY - this.y;
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
@@ -64,8 +63,8 @@ public class QSortButton extends ButtonWidget {
         if (this.dragging) {
             int newX = MathHelper.clamp((int) Math.round(mouseX - this.grabOffsetX), this.baseX, this.baseX + 156);
             int newY = MathHelper.clamp((int) Math.round(mouseY - this.grabOffsetY), this.baseY, this.baseY + 146);
-            this.setX(newX);
-            this.setY(newY);
+            this.x = newX;
+            this.y = newY;
             return true;
         }
         return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
@@ -75,8 +74,8 @@ public class QSortButton extends ButtonWidget {
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (this.dragging) {
             this.dragging = false;
-            CrossShulkerSortClient.config().buttonX = this.getX() - this.baseX;
-            CrossShulkerSortClient.config().buttonY = this.getY() - this.baseY;
+            CrossShulkerSortClient.config().buttonX = this.x - this.baseX;
+            CrossShulkerSortClient.config().buttonY = this.y - this.baseY;
             CrossShulkerSortClient.config().clamp();
             CrossShulkerSortClient.config().save();
             return true;

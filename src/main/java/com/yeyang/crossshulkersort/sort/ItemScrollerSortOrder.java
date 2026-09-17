@@ -3,7 +3,7 @@ package com.yeyang.crossshulkersort.sort;
 import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
+import net.minecraft.util.registry.Registry;
 
 import java.util.Comparator;
 
@@ -30,7 +30,7 @@ public final class ItemScrollerSortOrder {
             return 0;
         }
         if (a.getItem() != b.getItem()) {
-            return Registries.ITEM.getRawId(a.getItem()) - Registries.ITEM.getRawId(b.getItem());
+            return Registry.ITEM.getRawId(a.getItem()) - Registry.ITEM.getRawId(b.getItem());
         }
         if (!ItemStack.areItemsEqual(a, b) || !java.util.Objects.equals(a.getNbt(), b.getNbt())) {
             return Integer.compare(a.getNbt() == null ? 0 : a.getNbt().hashCode(),

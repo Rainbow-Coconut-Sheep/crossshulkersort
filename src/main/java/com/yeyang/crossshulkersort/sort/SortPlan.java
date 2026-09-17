@@ -3,7 +3,7 @@ package com.yeyang.crossshulkersort.sort;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
+import net.minecraft.util.registry.Registry;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -39,7 +39,7 @@ public final class SortPlan {
 
     /** Active stack order; the client injects Item Scroller's mirrored comparator. */
     public static Comparator<ItemStack> SORT_ORDER = Comparator
-            .comparing((ItemStack s) -> Registries.ITEM.getId(s.getItem()).toString())
+            .comparing((ItemStack s) -> Registry.ITEM.getId(s.getItem()).toString())
             .thenComparing(s -> java.util.Objects.hashCode(s.getNbt()))
             .thenComparing(s -> -s.getCount());
 
@@ -1141,7 +1141,7 @@ public final class SortPlan {
     }
 
     public static String keyName(StackKey key) {
-        return Registries.ITEM.getId(key.stack().getItem()).toString();
+        return Registry.ITEM.getId(key.stack().getItem()).toString();
     }
 
     public static boolean sameStackExact(ItemStack a, ItemStack b) {

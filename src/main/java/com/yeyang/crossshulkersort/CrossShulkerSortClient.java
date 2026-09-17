@@ -32,7 +32,7 @@ public class CrossShulkerSortClient implements ClientModInitializer {
             SortPlan.setSortOrder(com.yeyang.crossshulkersort.sort.ItemScrollerSortOrder.COMPARATOR);
         } else {
             SortPlan.setSortOrder(Comparator
-                    .comparing((ItemStack s) -> net.minecraft.registry.Registries.ITEM
+                    .comparing((ItemStack s) -> net.minecraft.util.registry.Registry.ITEM
                             .getId(s.getItem()).toString())
                     .thenComparing(s -> java.util.Objects.hashCode(s.getNbt()))
                     .thenComparing(s -> -s.getCount()));

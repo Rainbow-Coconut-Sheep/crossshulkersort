@@ -282,7 +282,9 @@ public final class ServerSorter {
                         excessDrained.put(key, drainLeft - stack.getCount());
                         continue; // fully drained into the home box
                     }
-                    residual.add(stack.copyWithCount(stack.getCount() - drainLeft));
+                    ItemStack rest = stack.copy();
+                    rest.setCount(stack.getCount() - drainLeft);
+                    residual.add(rest);
                     excessDrained.put(key, 0);
                     continue;
                 }
@@ -635,10 +637,14 @@ public final class ServerSorter {
                         keep.remove(i);
                         i--;
                     } else {
-                        keep.set(i, stack.copyWithCount(p));
+                        ItemStack rest = stack.copy();
+                        rest.setCount(p);
+                        keep.set(i, rest);
                     }
                 } else {
-                    keep.set(i, stack.copyWithCount(stack.getCount() - take));
+                    ItemStack rest = stack.copy();
+                    rest.setCount(stack.getCount() - take);
+                    keep.set(i, rest);
                 }
             }
         }

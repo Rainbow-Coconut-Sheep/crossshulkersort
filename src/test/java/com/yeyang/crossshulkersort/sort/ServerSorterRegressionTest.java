@@ -140,7 +140,8 @@ public final class ServerSorterRegressionTest {
     private static void differentComponents() {
         ItemStack namedHome = dropper(40);
         namedHome.getOrCreateSubNbt("display").putString("Name", "{\"text\":\"Named dropper\"}");
-        ItemStack namedMoved = namedHome.copyWithCount(15);
+        ItemStack namedMoved = namedHome.copy();
+        namedMoved.setCount(15);
         StackKey namedKey = new StackKey(namedHome);
         check(!key().equals(namedKey), "component variants must have different keys");
         Fixture fixture = new Fixture(List.of(
