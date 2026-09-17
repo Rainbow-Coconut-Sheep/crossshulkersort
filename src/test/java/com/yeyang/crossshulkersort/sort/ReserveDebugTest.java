@@ -6,7 +6,7 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
+import net.minecraft.util.registry.Registry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ public final class ReserveDebugTest {
                 Items.SHEARS, Items.FLINT_AND_STEEL, Items.OAK_SIGN, Items.SNOWBALL,
                 Items.ENDER_PEARL, Items.EGG, Items.STONE, Items.HOPPER};
         for (Item item : check) {
-            System.out.println(" max[" + Registries.ITEM.getId(item) + "]="
+            System.out.println(" max[" + Registry.ITEM.getId(item) + "]="
                     + new ItemStack(item).getMaxCount());
         }
 

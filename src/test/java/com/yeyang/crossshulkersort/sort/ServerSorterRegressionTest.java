@@ -6,7 +6,7 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.text.Text;
 
 import java.util.ArrayList;
@@ -272,7 +272,7 @@ public final class ServerSorterRegressionTest {
     }
 
     private static void defragPullsHopperHome() {
-        Item[] singles = new Item[]{Items.OAK_BUTTON, Items.OAK_FENCE, Items.BAMBOO_FENCE_GATE,
+        Item[] singles = new Item[]{Items.OAK_BUTTON, Items.OAK_FENCE, Items.SPRUCE_FENCE_GATE,
                 Items.SOUL_SAND, Items.BONE, Items.OAK_TRAPDOOR, Items.OAK_SIGN, Items.TARGET,
                 Items.OAK_SIGN, Items.GUNPOWDER, Items.GOLD_NUGGET, Items.PHANTOM_MEMBRANE,
                 Items.LEAD, Items.OAK_DOOR, Items.OAK_SLAB, Items.OAK_PRESSURE_PLATE,
@@ -320,7 +320,7 @@ public final class ServerSorterRegressionTest {
     }
 
     private static void topUpFillsPartialFromLoose() {
-        Item[] singles = new Item[]{Items.OAK_BUTTON, Items.OAK_FENCE, Items.BAMBOO_FENCE_GATE,
+        Item[] singles = new Item[]{Items.OAK_BUTTON, Items.OAK_FENCE, Items.SPRUCE_FENCE_GATE,
                 Items.SOUL_SAND, Items.BONE, Items.OAK_TRAPDOOR, Items.OAK_SIGN, Items.TARGET,
                 Items.OAK_SIGN, Items.GUNPOWDER, Items.GOLD_NUGGET, Items.PHANTOM_MEMBRANE,
                 Items.LEAD, Items.OAK_BOAT, Items.MUSIC_DISC_PIGSTEP, Items.DIAMOND_SWORD,
