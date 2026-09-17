@@ -1,10 +1,12 @@
-# Cross Shulker Sort 跨潜影盒整理
+# Cross Shulker Sort 跨潜影盒整理（1.20.1 分支，NBT 存档版）
 
-[Minecraft](https://www.minecraft.net/) **26.2 Fabric** mod: a draggable **Q** button in the inventory screen that sorts
+[Minecraft](https://www.minecraft.net/) **1.20.1 Fabric** mod: a draggable **Q** button in the inventory screen that sorts
 your backpack **and** all plain shulker boxes in one click — **server-side, no click simulation**.
 
-Minecraft **26.2 Fabric** 模组：在背包界面添加一个可拖动的 **Q** 按钮，一键整理背包 **+** 所有普通潜影盒。
-整理逻辑在**服务端**直接读写数据完成，不模拟任何点击。
+Minecraft **1.20.1 Fabric** 模组：在背包界面添加一个可拖动的 **Q** 按钮，一键整理背包 **+** 所有普通潜影盒。
+整理逻辑在**服务端**直接读写数据完成，不模拟任何点击。1.20.4 及更早版本用 NBT 存盒内容，
+本分支即 NBT 版（`BlockEntityTag.Items` 读写 + 旧版网络包）。
+其他版本见分支：`main`（26.2）、`mc/1.21.1`（1.21.1，组件存档版）。
 
 ## Features / 功能
 
@@ -55,20 +57,24 @@ Minecraft **26.2 Fabric** 模组：在背包界面添加一个可拖动的 **Q**
 
 ## Build / 构建
 
-需要 **JDK 25**。
+需要 **JDK 17**（Gradle 工具链自动下载）。
 
 ```bash
 ./gradlew clean build        # 必须 clean；产物在 build/libs/
-./gradlew regressionTest     # 19 项回归
-./gradlew fuzzTest           # 5000 随机态
-./gradlew hashTest           # StackKey 哈希契约
 ```
+
+说明：`regressionTest`/`fuzzTest`/`hashTest` 需要原版 bootstrap，在 Yarn 映射下无法独立运行
+（`SimpleRegistry` 与 `RegistryEntry$Reference` 在官方映射同包、Yarn 拆包，自 1.17 起的已知限制，
+与本 mod 无关），逻辑门在 `main`（26.2）分支全绿；本分支已通过无头 1.20.1 服务端启动冒烟验证。
 
 Gradle wrapper 已配置国内镜像。构建产物 jar 改名即改版本（`gradle.properties` 中 `mod_version`）。
 
 ## Install / 安装
 
-把 `build/libs/crossshulkersort-<版本>+26.2.jar` 放入 `.minecraft/mods`（服务端整理逻辑同样需要装在服务端 / 单人游戏）。
+把 `build/libs/crossshulkersort-<版本>+1.20.1.jar` 放入 `.minecraft/mods`（服务端整理逻辑同样需要装在服务端 / 单人游戏）。
+搭配：ModMenu 7.2 + Cloth Config 11.1（可选，配置界面）。
+注意：masa Item Scroller 0.20.0 没有整理排序功能，本分支排序恒为原版 ID 序，
+`useItemScrollerOrder` 开关无效。
 
 ## Log keywords / 日志关键字
 
