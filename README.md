@@ -6,6 +6,17 @@ your backpack **and** all plain shulker boxes in one click — **server-side, no
 Minecraft **26.2 Fabric** 模组：在背包界面添加一个可拖动的 **Q** 按钮，一键整理背包 **+** 所有普通潜影盒。
 整理逻辑在**服务端**直接读写数据完成，不模拟任何点击。
 
+## Versions / 版本分支
+
+| 分支 | MC | 存档 | Java | Item Scroller 跟随 | 状态 |
+|---|---|---|---|---|---|
+| `main` | 26.2 | 数据组件 | 25 | ✅ 0.32.2 | 全绿（回归19+fuzz5000）+ 实机验证 |
+| `mc/1.21.1` | 1.21.1 | 数据组件 | 21 | ✅ 0.24.60 | 编译+无头服冒烟通过 |
+| `mc/1.20.1` | 1.20.1 | NBT（`BlockEntityTag`） | 17 | ➖（0.20.0 无排序功能，恒 ID 序） | 编译+无头服冒烟通过 |
+
+说明：Yarn 分支的回归/fuzz 测试无法独立运行（`SimpleRegistry` 跨包访问是自 1.17 起的已知
+Yarn 限制，与本 mod 无关），逻辑门统一在 `main` 分支执行——各分支整理核心算法完全一致。
+
 ## Features / 功能
 
 - **Q button / Q 按钮**：10×10，位于背包界面；点击整理，**按住 Shift 可拖动**，位置保存在 `config/crossshulkersort.json`。
