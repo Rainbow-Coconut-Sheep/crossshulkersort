@@ -2,6 +2,8 @@ package com.yeyang.crossshulkersort.sort;
 
 import net.minecraft.Bootstrap;
 import net.minecraft.SharedConstants;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -139,7 +141,7 @@ public final class ServerSorterRegressionTest {
 
     private static void differentComponents() {
         ItemStack namedHome = dropper(40);
-        namedHome.getOrCreateSubNbt("display").putString("Name", "{\"text\":\"Named dropper\"}");
+        namedHome.set(DataComponentTypes.CUSTOM_NAME, Text.literal("Named dropper"));
         ItemStack namedMoved = namedHome.copyWithCount(15);
         StackKey namedKey = new StackKey(namedHome);
         check(!key().equals(namedKey), "component variants must have different keys");
@@ -551,7 +553,7 @@ public final class ServerSorterRegressionTest {
 
     private static ItemStack box(List<ItemStack> contents) {
         ItemStack stack = new ItemStack(Items.SHULKER_BOX);
-        ShulkerRules.writeContents(stack, contents);
+        stack.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(contents));
         return stack;
     }
 

@@ -1,26 +1,26 @@
 package com.yeyang.crossshulkersort.sort;
 
-import net.minecraft.block.ShulkerBoxBlock;
+import net.minecraft.component.Component;
+import net.minecraft.component.DataComponentType;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
+import net.minecraft.block.ShulkerBoxBlock;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
- * Scope rules for the sort (1.20.1: NBT storage - box contents live in the
- * {@code BlockEntityTag.Items} list, not in a data component).
+ * Scope rules for the sort.
  *
  * Eligible ("plain") shulker box: vanilla undyed shulker box, stack count 1, no custom
- * name and no special-purpose NBT - i.e. the only NBT keys are the container contents
- * itself (plus a plain display name when configured).
+ * name and no special-purpose components - i.e. every data component either matches the
+ * fresh-item default or is the container contents itself.
  *
- * Colored boxes are different items, named boxes carry display.Name, and anything else
- * a mod/anvil put on the stack shows up as extra NBT - all skipped.
+ * Colored boxes are different items, named boxes carry CUSTOM_NAME, and anything else a
+ * mod/anvil put on the stack shows up as an extra component - all skipped.
  *
  * Locked box: contains exactly one item type and is completely full (27/27 slots at max
  * stack size) - it is already optimal, so it never participates.
@@ -52,15 +52,16 @@ public final class ShulkerRules {
         } else if (stack.getItem() != Items.SHULKER_BOX) {
             return false;
         }
-        NbtCompound tag = stack.getNbt();
-        if (tag == null) {
+        if (eff.includeNamed) {
             return true;
         }
-        for (String key : tag.getKeys()) {
-            if (key.equals("BlockEntityTag")) {
+        ItemStack fresh = new ItemStack(stack.getItem());
+        for (Component<?> typed : stack.getComponents()) {
+            DataComponentType<?> type = typed.type();
+            if (type == DataComponentTypes.CONTAINER) {
                 continue;
             }
-            if (key.equals("display") && eff.includeNamed && isPlainDisplayName(tag)) {
+            if (Objects.equals(fresh.get(type), stack.get(type))) {
                 continue;
             }
             return false;
@@ -68,46 +69,10 @@ public final class ShulkerRules {
         return true;
     }
 
-    /** display tag holding only a custom Name (no Lore) counts as "just named". */
-    private static boolean isPlainDisplayName(NbtCompound tag) {
-        NbtCompound display = tag.getCompound("display");
-        return display.contains("Name", NbtElement.STRING_TYPE) && !display.contains("Lore");
-    }
-
     public static List<ItemStack> readContents(ItemStack box) {
-        List<ItemStack> out = new ArrayList<>();
-        NbtCompound tag = box.getSubNbt("BlockEntityTag");
-        if (tag == null || !tag.contains("Items", NbtElement.LIST_TYPE)) {
-            return out;
-        }
-        NbtList list = tag.getList("Items", NbtElement.COMPOUND_TYPE);
-        for (NbtElement e : list) {
-            ItemStack s = ItemStack.fromNbt((NbtCompound) e);
-            if (!s.isEmpty()) {
-                out.add(s);
-            }
-        }
-        return out;
-    }
-
-    /** Writes up to 27 slot stacks (EMPTY entries skipped); empty content removes the tag. */
-    public static void writeContents(ItemStack box, List<ItemStack> slots) {
-        NbtList list = new NbtList();
-        for (int i = 0; i < Math.min(slots.size(), BOX_SLOTS); i++) {
-            ItemStack s = slots.get(i);
-            if (s.isEmpty()) {
-                continue;
-            }
-            NbtCompound c = new NbtCompound();
-            c.putByte("Slot", (byte) i);
-            s.writeNbt(c);
-            list.add(c);
-        }
-        if (list.isEmpty()) {
-            box.removeSubNbt("BlockEntityTag");
-        } else {
-            box.getOrCreateSubNbt("BlockEntityTag").put("Items", list);
-        }
+        return box.getOrDefault(DataComponentTypes.CONTAINER, ContainerComponent.DEFAULT)
+                .streamNonEmpty()
+                .toList();
     }
 
     /** Any shulker box item (undyed or colored) - treated as a container, never as a sortable item. */

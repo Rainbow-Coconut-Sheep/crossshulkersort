@@ -2,6 +2,8 @@ package com.yeyang.crossshulkersort.sort;
 
 import net.minecraft.Bootstrap;
 import net.minecraft.SharedConstants;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -49,7 +51,7 @@ public final class ReserveDebugTest {
             contents.add(new ItemStack(unstack[r.nextInt(unstack.length) % unstack.length], 1));
             contents.add(new ItemStack(unstack[(r.nextInt(unstack.length) + 3) % unstack.length], 1));
             ItemStack box = new ItemStack(Items.SHULKER_BOX);
-            ShulkerRules.writeContents(box, contents);
+            box.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(contents));
             inventory.setStack(10 + b, box);
         }
         // some loose stackables

@@ -16,16 +16,13 @@
 		],
 		"main": [
 			"com.yeyang.crossshulkersort.CrossShulkerSort"
-		],
-		"modmenu": [
-			"com.yeyang.crossshulkersort.config.ModMenuEntry"
 		]
 	},
 	"mixins": [
 		"crossshulkersort.mixins.json"
 	],
 	"depends": {
-		"minecraft": ">=1.20.1 <1.20.2",
+		"minecraft": ">=1.20.5 <1.20.6",
 		"fabricloader": ">=0.16.0",
 		"fabric-api": "*"
 	},

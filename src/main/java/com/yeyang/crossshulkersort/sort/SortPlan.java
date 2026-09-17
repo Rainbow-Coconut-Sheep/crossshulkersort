@@ -40,7 +40,7 @@ public final class SortPlan {
     /** Active stack order; the client injects Item Scroller's mirrored comparator. */
     public static Comparator<ItemStack> SORT_ORDER = Comparator
             .comparing((ItemStack s) -> Registries.ITEM.getId(s.getItem()).toString())
-            .thenComparing(s -> java.util.Objects.hashCode(s.getNbt()))
+            .thenComparing(s -> s.getComponents().hashCode())
             .thenComparing(s -> -s.getCount());
 
     /** Called from the client entrypoint so in-game sorts mirror Item Scroller's order. */
@@ -419,7 +419,7 @@ public final class SortPlan {
         }
         // overflow pass: home-full types left over above are split into the next box
         // with free slots instead of staying loose. One-type-one-box is best effort
-        // ("尽量"); a full home must spill somewhere, and a box is better than loose
+        // ("灏介噺"); a full home must spill somewhere, and a box is better than loose
         // while empty boxes exist. Work order (class group + ItemScroller) is kept.
         // Group filters stay on: unstackables only spill inside reserved boxes.
         // Disabled via config: leftovers honestly stay loose.
@@ -471,7 +471,7 @@ public final class SortPlan {
         // (no cross-group spill: a leftover stack beats a mixed reserved box, and the
         // next Q - or the next pass of this Q - repacks from the new state)
 
-        // ---- defrag ("腾家"): pull split types together when room can be made
+        // ---- defrag ("鑵惧"): pull split types together when room can be made
         // WITHOUT creating new splits. Only whole-type relocations (an entire quota
         // moved to a box that neither holds nor wants it) are used as evictions, so
         // the split count strictly decreases; anything else is left as it is.
@@ -1145,8 +1145,7 @@ public final class SortPlan {
     }
 
     public static boolean sameStackExact(ItemStack a, ItemStack b) {
-        return a.getCount() == b.getCount() && ItemStack.areItemsEqual(a, b)
-                && java.util.Objects.equals(a.getNbt(), b.getNbt());
+        return a.getCount() == b.getCount() && ItemStack.areItemsAndComponentsEqual(a, b);
     }
 
     public static boolean isUnsorted(List<ItemStack> contents) {

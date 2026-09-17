@@ -8,10 +8,10 @@ import net.minecraft.registry.Registries;
 import java.util.Comparator;
 
 /**
- * Stack ordering for 1.20.1: masa Item Scroller 0.20.0 has no inventory sorting
- * to mirror, so this is plain vanilla id order (same as the
- * {@code useItemScrollerOrder=false} fallback on newer branches). Kept as a named
- * comparator so the config switch and call sites stay version-independent.
+ * Stack ordering for 1.20.5: no Item Scroller integration on this branch, so this
+ * is plain vanilla id order (same as the {@code useItemScrollerOrder=false} fallback
+ * on newer branches). Kept as a named comparator so the config switch and call
+ * sites stay version-independent.
  */
 public final class ItemScrollerSortOrder {
 
@@ -32,9 +32,8 @@ public final class ItemScrollerSortOrder {
         if (a.getItem() != b.getItem()) {
             return Registries.ITEM.getRawId(a.getItem()) - Registries.ITEM.getRawId(b.getItem());
         }
-        if (!ItemStack.areItemsEqual(a, b) || !java.util.Objects.equals(a.getNbt(), b.getNbt())) {
-            return Integer.compare(a.getNbt() == null ? 0 : a.getNbt().hashCode(),
-                    b.getNbt() == null ? 0 : b.getNbt().hashCode());
+        if (!ItemStack.areItemsAndComponentsEqual(a, b)) {
+            return Integer.compare(a.getComponents().hashCode(), b.getComponents().hashCode());
         }
         return Integer.compare(b.getCount(), a.getCount());
     }
