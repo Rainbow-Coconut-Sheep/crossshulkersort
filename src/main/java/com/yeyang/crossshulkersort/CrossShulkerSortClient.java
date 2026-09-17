@@ -3,7 +3,7 @@ package com.yeyang.crossshulkersort;
 import com.yeyang.crossshulkersort.config.ModConfig;
 import com.yeyang.crossshulkersort.sort.SortPlan;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.network.ClientSidePacketRegistry;
 import net.minecraft.item.ItemStack;
 
 import java.util.Comparator;
@@ -75,8 +75,8 @@ public class CrossShulkerSortClient implements ClientModInitializer {
 
     /** Sent when the Q button is pressed; the server does the actual sorting. */
     public static void requestSort() {
-        ClientPlayNetworking.send(CrossShulkerSort.SORT_REQUEST,
-                net.fabricmc.fabric.api.networking.v1.PacketByteBufs.empty());
+        ClientSidePacketRegistry.INSTANCE.sendToServer(CrossShulkerSort.SORT_REQUEST,
+                new net.minecraft.network.PacketByteBuf(io.netty.buffer.Unpooled.buffer()));
     }
 }
 
