@@ -4,6 +4,7 @@ import net.minecraft.Bootstrap;
 import net.minecraft.SharedConstants;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
+import net.minecraft.entity.EntityEquipment;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -180,7 +181,7 @@ public final class ServerSorterRegressionTest {
         List<ItemStack> nonhome = List.of(dropper(21),
                 new ItemStack(Items.DIRT, 64), new ItemStack(Items.COBBLESTONE, 64),
                 new ItemStack(Items.GRANITE, 64), new ItemStack(Items.DIORITE, 64));
-        PlayerInventory inventory = new PlayerInventory(null);
+        PlayerInventory inventory = new PlayerInventory(null, new EntityEquipment());
         inventory.setStack(0, box(home));
         inventory.setStack(1, box(nonhome));
         inventory.setStack(2, dropper(43));
@@ -289,7 +290,7 @@ public final class ServerSorterRegressionTest {
         List<ItemStack> other = new ArrayList<>(List.of(
                 new ItemStack(Items.HOPPER, 64), new ItemStack(Items.HOPPER, 57),
                 new ItemStack(Items.DIRT, 64)));
-        PlayerInventory inventory = new PlayerInventory(null);
+        PlayerInventory inventory = new PlayerInventory(null, new EntityEquipment());
         inventory.setStack(0, box(home));
         inventory.setStack(1, box(other));
         SortPlan plan = SortPlan.compute(inventory);
@@ -332,7 +333,7 @@ public final class ServerSorterRegressionTest {
         for (Item single : singles) {
             home.add(new ItemStack(single, 1));
         }
-        PlayerInventory inventory = new PlayerInventory(null);
+        PlayerInventory inventory = new PlayerInventory(null, new EntityEquipment());
         inventory.setStack(0, box(home));
         inventory.setStack(2, new ItemStack(Items.TRIPWIRE_HOOK, 36));
         SortPlan plan = SortPlan.compute(inventory);
@@ -355,7 +356,7 @@ public final class ServerSorterRegressionTest {
         for (int i = 0; i < 5; i++) {
             other.add(new ItemStack(Items.STONE, 64));
         }
-        PlayerInventory inventory = new PlayerInventory(null);
+        PlayerInventory inventory = new PlayerInventory(null, new EntityEquipment());
         inventory.setStack(0, box(mixed));
         inventory.setStack(1, box(other));
         SortPlan plan = SortPlan.compute(inventory);
@@ -423,7 +424,7 @@ public final class ServerSorterRegressionTest {
         List<ItemStack> holder = new ArrayList<>(List.of(
                 new ItemStack(Items.DIAMOND_SWORD, 1), new ItemStack(Items.DIAMOND_SWORD, 1),
                 new ItemStack(Items.STONE, 64), new ItemStack(Items.STONE, 64)));
-        PlayerInventory inventory = new PlayerInventory(null);
+        PlayerInventory inventory = new PlayerInventory(null, new EntityEquipment());
         inventory.setStack(5, box(full));
         inventory.setStack(1, box(holder));
         SortPlan plan = SortPlan.compute(inventory);
@@ -482,7 +483,7 @@ public final class ServerSorterRegressionTest {
         for (int i = 0; i < 20; i++) {
             e.add(new ItemStack(Items.STONE, 64));
         }
-        PlayerInventory inventory = new PlayerInventory(null);
+        PlayerInventory inventory = new PlayerInventory(null, new EntityEquipment());
         inventory.setStack(0, box(a));
         inventory.setStack(1, box(b));
         inventory.setStack(2, box(c));
@@ -523,7 +524,7 @@ public final class ServerSorterRegressionTest {
         for (int i = 0; i < 20; i++) {
             c.add(new ItemStack(Items.STONE, 64));
         }
-        PlayerInventory inventory = new PlayerInventory(null);
+        PlayerInventory inventory = new PlayerInventory(null, new EntityEquipment());
         inventory.setStack(0, box(a));
         inventory.setStack(1, box(b));
         inventory.setStack(2, box(c));
