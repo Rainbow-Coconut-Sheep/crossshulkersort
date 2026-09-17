@@ -1,0 +1,133 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version '1.17.+'
+}
+
+version = "${project.mod_version}+${project.minecraft_version}"
+group = 'com.yeyang'
+
+base {
+    archivesName = project.mod_id
+}
+
+repositories {
+    maven {
+        url = 'https://masa.dy.fi/maven/sakura-ryoko'
+        content { includeGroupAndSubgroups('fi.dy.masa') }
+    }
+    maven {
+        url = 'https://maven.fallenbreath.me/releases'
+        content { includeGroupAndSubgroups('me.fallenbreath') }
+    }
+    maven {
+        url = 'https://maven.terraformersmc.com/releases/'
+        content { includeGroup('com.terraformersmc') }
+    }
+    maven {
+        url = 'https://maven.shedaniel.me/'
+        content { includeGroupAndSubgroups('me.shedaniel.cloth') }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
+
+    // MC 26.x ships unobfuscated: no mappings and no mod-* remapping configurations,
+    // plain implementation deps are used for mod jars (same pattern as Item Scroller).
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+    // Optional integration (client-only, for mirroring Item Scroller's sort settings)
+    implementation "fi.dy.masa.itemscroller:itemscroller-fabric-${project.minecraft_version}:${project.itemscroller_version}"
+    implementation "fi.dy.masa.malilib:malilib-fabric-${project.minecraft_version}:${project.malilib_version}"
+
+    // Config screen (soft deps: only loaded when ModMenu/Cloth Config are installed)
+    implementation "com.terraformersmc:modmenu:20.0.1"
+    implementation "me.shedaniel.cloth:cloth-config-fabric:26.2.155"
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = 'UTF-8'
+    it.options.release = 25
+}
+
+tasks.register('regressionTest', JavaExec) {
+    group = 'verification'
+    description = 'Runs ServerSorter regression tests without a test framework.'
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.yeyang.crossshulkersort.sort.ServerSorterRegressionTest'
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.register('hashTest', JavaExec) {
+    group = 'verification'
+    description = 'Runs StackKey hash tests.'
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.yeyang.crossshulkersort.sort.StackKeyHashTest'
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.register('fuzzTest', JavaExec) {
+    group = 'verification'
+    description = 'Runs SortPlan fuzz tests.'
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.yeyang.crossshulkersort.sort.SortPlanFuzzTest'
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.register('reserveDebug', JavaExec) {
+    group = 'verification'
+    description = 'Runs reserve debug.'
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.yeyang.crossshulkersort.sort.ReserveDebugTest'
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.named('test') {
+    exclude 'com/yeyang/crossshulkersort/sort/ServerSorterRegressionTest*.class'
+    exclude 'com/yeyang/crossshulkersort/sort/SortPlanFuzzTest*.class'
+    exclude 'com/yeyang/crossshulkersort/sort/StackKeyHashTest*.class'
+    failOnNoDiscoveredTests = false
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('regressionTest')
+}
+
+processResources {
+    inputs.property 'mod_version', project.mod_version
+    filesMatching('fabric.mod.json') {
+        expand 'mod_version': project.mod_version
+    }
+}
+
+jar {
+    from('LICENSE') {
+        rename { "${it}_${project.base.archivesName.get()}" }
+    }
+}
+
+// Copy the built mod jar to the export folder
+tasks.register('exportJar', Copy) {
+    dependsOn build
+    from layout.buildDirectory.dir('libs')
+    include "crossshulkersort-${project.mod_version}+${project.minecraft_version}.jar"
+    into rootProject.file('../输出jar')
+}

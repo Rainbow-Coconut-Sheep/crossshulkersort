@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "crossshulkersort",
+	"name": "Cross Shulker Sort 跨潜影盒整理",
+	"version": "${mod_version}",
+	"description": "One-click cross-shulker-box sorting for the player inventory: packs loose items into plain shulker boxes and consolidates their contents to minimize the number of boxes used. Requires Quick Shulker (opening boxes) and Item Scroller (item moving).",
+	"authors": [
+		"Yeyang"
+	],
+	"license": "MIT",
+	"icon": "assets/crossshulkersort/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"client": [
+			"com.yeyang.crossshulkersort.CrossShulkerSortClient"
+		],
+		"main": [
+			"com.yeyang.crossshulkersort.CrossShulkerSort"
+		],
+		"modmenu": [
+			"com.yeyang.crossshulkersort.config.ModMenuEntry"
+		]
+	},
+	"mixins": [
+		"crossshulkersort.mixins.json"
+	],
+	"depends": {
+		"minecraft": ">=26.2 <26.3",
+		"fabricloader": ">=0.19.3",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"quickshulker": "*",
+		"modmenu": "*",
+		"cloth-config": "*"
+	}
+}

@@ -1,0 +1,14 @@
+{
+	"required": true,
+	"package": "com.yeyang.crossshulkersort.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"minVersion": "0.8",
+	"client": [
+		"AbstractContainerScreenMixin",
+		"AbstractContainerScreenAccessor",
+		"ScreenInvoker"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
