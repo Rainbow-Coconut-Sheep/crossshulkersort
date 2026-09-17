@@ -1,16 +1,13 @@
 package com.yeyang.crossshulkersort.sort;
 
+import net.minecraft.Bootstrap;
 import net.minecraft.SharedConstants;
-import net.minecraft.core.component.DataComponentInitializers;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.data.registries.VanillaRegistries;
-import net.minecraft.server.Bootstrap;
-import net.minecraft.world.entity.EntityEquipment;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.ContainerComponent;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,10 +17,8 @@ public final class StackKeyHashTest {
     private StackKeyHashTest() {}
 
     public static void main(String[] args) throws Exception {
-        SharedConstants.tryDetectVersion();
-        Bootstrap.bootStrap();
-        net.minecraft.core.registries.BuiltInRegistries.DATA_COMPONENT_INITIALIZERS.build(VanillaRegistries.createLookup())
-                .forEach(DataComponentInitializers.PendingComponents::apply);
+        SharedConstants.createGameVersion();
+        Bootstrap.initialize();
 
         // basic: two fresh droppers
         ItemStack a = new ItemStack(Items.DROPPER, 64);
@@ -35,7 +30,7 @@ public final class StackKeyHashTest {
         // via box read
         List<ItemStack> contents = List.of(new ItemStack(Items.DROPPER, 64), new ItemStack(Items.DROPPER, 21));
         ItemStack box = new ItemStack(Items.SHULKER_BOX);
-        box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(contents));
+        box.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(contents));
         List<ItemStack> read = ShulkerRules.readContents(box);
         System.out.println("read size=" + read.size());
         for (ItemStack s : read) {
@@ -54,11 +49,11 @@ public final class StackKeyHashTest {
 
         // component mutation sharing test
         ItemStack boxStack = new ItemStack(Items.SHULKER_BOX);
-        boxStack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(List.of(new ItemStack(Items.STONE, 5))));
+        boxStack.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(List.of(new ItemStack(Items.STONE, 5))));
         StackKey kBox = new StackKey(boxStack);
         int hbBefore = kBox.hashCode();
         // mutate original box contents
-        boxStack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(List.of(new ItemStack(Items.DIRT, 7))));
+        boxStack.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(List.of(new ItemStack(Items.DIRT, 7))));
         int hbAfter = kBox.hashCode();
         System.out.println("mutate box components hashBefore=" + hbBefore + " hashAfter=" + hbAfter + " stable=" + (hbBefore==hbAfter) + " equalsAfterMutate=" + kBox.equals(new StackKey(boxStack)));
 
@@ -68,12 +63,12 @@ public final class StackKeyHashTest {
         List<StackKey> keys = new ArrayList<>();
         for (int i = 0; i < 200; i++) {
             Item it = items[r.nextInt(items.length)];
-            int max = new ItemStack(it).getMaxStackSize();
+            int max = new ItemStack(it).getMaxCount();
             ItemStack s = new ItemStack(it, 1 + r.nextInt(max));
             // sometimes put through box round-trip
             if (r.nextBoolean()) {
                 ItemStack bx = new ItemStack(Items.SHULKER_BOX);
-                bx.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(List.of(s)));
+                bx.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(List.of(s)));
                 List<ItemStack> rd = ShulkerRules.readContents(bx);
                 if (!rd.isEmpty()) s = rd.get(0);
             }

@@ -1,13 +1,13 @@
 package com.yeyang.crossshulkersort.sort;
 
 import com.yeyang.crossshulkersort.sort.SortPlan.BoxInfo;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.NonNullList;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.ContainerComponent;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
+import net.minecraft.util.collection.DefaultedList;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,11 +75,11 @@ public final class ServerSorter {
      * round finds nothing or aborts. At most 3 rounds; every round is individually
      * conservation-checked with rollback, and only one summary chat line is sent.
      */
-    public static void sort(ServerPlayer player) {
-        Inventory scan = player.getInventory();
+    public static void sort(ServerPlayerEntity player) {
+        PlayerInventory scan = player.getInventory();
         Map<Integer, Boolean> wasFilled = new HashMap<>();
         for (int i = 0; i < 36; i++) {
-            ItemStack stack = scan.getItem(i);
+            ItemStack stack = scan.getStack(i);
             if (ShulkerRules.isUsableBox(stack)) {
                 wasFilled.put(i, !ShulkerRules.readContents(stack).isEmpty());
             }
@@ -99,22 +99,22 @@ public final class ServerSorter {
             if (r == 3) {
                 // a round applied bit-for-bit nothing: same state in means same plan
                 // out (deterministic), so further rounds cannot progress either
-                player.sendSystemMessage(Component.translatable("crossshulkersort.err.stuck"));
+                player.sendMessage(Text.translatable("crossshulkersort.err.stuck"));
                 return;
             }
             break; // nothing left to do
         }
         if (!didWork) {
             if (eff.chatReport) {
-                player.sendSystemMessage(Component.translatable("crossshulkersort.done.nothing"));
+                player.sendMessage(Text.translatable("crossshulkersort.done.nothing"));
             }
             return;
         }
-        Inventory inv = player.getInventory();
+        PlayerInventory inv = player.getInventory();
         int used = 0;
         int freed = 0;
         for (Map.Entry<Integer, Boolean> e : wasFilled.entrySet()) {
-            boolean nowFilled = !ShulkerRules.readContents(inv.getItem(e.getKey())).isEmpty();
+            boolean nowFilled = !ShulkerRules.readContents(inv.getStack(e.getKey())).isEmpty();
             if (nowFilled) {
                 used++;
             } else if (e.getValue()) {
@@ -122,25 +122,25 @@ public final class ServerSorter {
             }
         }
         if (eff.chatReport) {
-            player.sendSystemMessage(Component.translatable("crossshulkersort.done", used, freed, ""));
+            player.sendMessage(Text.translatable("crossshulkersort.done", used, freed, ""));
         }
     }
 
     /** @return 0 nothing to do, 1 applied a round, 2 stopped with a message shown,
      * 3 applied bit-for-bit nothing (stuck - same state would plan identically) */
-    private static int sortPass(ServerPlayer player, boolean quiet) {
-        Inventory inv = player.getInventory();
-        if (player.containerMenu != player.inventoryMenu) {
+    private static int sortPass(ServerPlayerEntity player, boolean quiet) {
+        PlayerInventory inv = player.getInventory();
+        if (player.currentScreenHandler != player.playerScreenHandler) {
             // another container (e.g. an open shulker box) is showing: sorting now
             // would yank items out from under it, so refuse LOUDLY instead of dying
             // silently - a silent no-op here looks exactly like "Q does nothing"
-            player.sendSystemMessage(Component.translatable("crossshulkersort.err.container"));
+            player.sendMessage(Text.translatable("crossshulkersort.err.container"));
             return 2;
         }
-        if (!player.containerMenu.getCarried().isEmpty()) {
+        if (!player.currentScreenHandler.getCursorStack().isEmpty()) {
             // an item is on the cursor (e.g. another inventory mod was mid-action) -
             // rewriting slots now would strand it
-            player.sendSystemMessage(Component.translatable("crossshulkersort.err.carried"));
+            player.sendMessage(Text.translatable("crossshulkersort.err.carried"));
             return 2;
         }
 
@@ -148,13 +148,13 @@ public final class ServerSorter {
         // contaminate the conservation baseline
         List<ItemStack> inventory = new ArrayList<>(36);
         for (int i = 0; i < 36; i++) {
-            inventory.add(inv.getItem(i).copy());
+            inventory.add(inv.getStack(i).copy());
         }
 
         SortPlan plan = SortPlan.compute(inv, null);
         if (!plan.hasWork) {
             if (!quiet) {
-                player.sendSystemMessage(Component.translatable("crossshulkersort.done.nothing"));
+                player.sendMessage(Text.translatable("crossshulkersort.done.nothing"));
             }
             return 0;
         }
@@ -192,7 +192,7 @@ public final class ServerSorter {
                     }
                 }
                 int toPlace = e.getValue() - own;
-                int max = key.stack().getMaxStackSize();
+                int max = key.stack().getMaxCount();
                 while (toPlace > 0 && keep.size() + app.size() < ShulkerRules.BOX_SLOTS) {
                     int count = Math.min(toPlace, max);
                     ItemStack stack = key.stack().copy();
@@ -427,7 +427,7 @@ public final class ServerSorter {
                         dumpTypeTrace(plan, e.getKey(), before, after);
                     }
                 }
-                player.sendSystemMessage(Component.translatable("crossshulkersort.err.internal"));
+                player.sendMessage(Text.translatable("crossshulkersort.err.internal"));
                 return 2; // abort without touching anything
             }
             // recompute `after` after trimming and re-verify (same accounting as above)
@@ -471,7 +471,7 @@ public final class ServerSorter {
                 }
             }
             if (!equal) {
-                player.sendSystemMessage(Component.translatable("crossshulkersort.err.internal"));
+                player.sendMessage(Text.translatable("crossshulkersort.err.internal"));
                 return 2;
             }
         }
@@ -483,36 +483,36 @@ public final class ServerSorter {
             List<ItemStack> contents = new ArrayList<>(kept.get(b));
             contents.addAll(appended.get(b));
             contents.sort(SortPlan.SORT_ORDER);
-            ItemStack boxStack = inv.getItem(box.invIndex);
+            ItemStack boxStack = inv.getStack(box.invIndex);
             if (contents.isEmpty()) {
-                boxStack.set(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
+                boxStack.set(DataComponentTypes.CONTAINER, ContainerComponent.DEFAULT);
             } else {
-                NonNullList<ItemStack> slots = NonNullList.withSize(ShulkerRules.BOX_SLOTS, ItemStack.EMPTY);
+                DefaultedList<ItemStack> slots = DefaultedList.ofSize(ShulkerRules.BOX_SLOTS, ItemStack.EMPTY);
                 for (int s = 0; s < Math.min(contents.size(), ShulkerRules.BOX_SLOTS); s++) {
                     slots.set(s, contents.get(s));
                 }
-                boxStack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(slots));
+                boxStack.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(slots));
             }
         }
         // ---- apply: excess box components
         for (Map.Entry<Integer, List<ItemStack>> e : newBoxContents.entrySet()) {
-            ItemStack box = inv.getItem(e.getKey());
+            ItemStack box = inv.getStack(e.getKey());
             if (e.getValue().isEmpty()) {
-                box.set(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
+                box.set(DataComponentTypes.CONTAINER, ContainerComponent.DEFAULT);
             } else {
-                NonNullList<ItemStack> slots = NonNullList.withSize(ShulkerRules.BOX_SLOTS, ItemStack.EMPTY);
+                DefaultedList<ItemStack> slots = DefaultedList.ofSize(ShulkerRules.BOX_SLOTS, ItemStack.EMPTY);
                 for (int s = 0; s < Math.min(e.getValue().size(), ShulkerRules.BOX_SLOTS); s++) {
                     slots.set(s, e.getValue().get(s));
                 }
-                box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(slots));
+                box.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(slots));
             }
         }
         // ---- apply: inventory
         for (int i = 0; i < 36; i++) {
             if (newCount[i] == 0) {
-                inv.setItem(i, ItemStack.EMPTY);
+                inv.setStack(i, ItemStack.EMPTY);
             } else if (newCount[i] > 0) {
-                inv.getItem(i).setCount(newCount[i]);
+                inv.getStack(i).setCount(newCount[i]);
             }
         }
 
@@ -521,13 +521,13 @@ public final class ServerSorter {
         // even if a future bug slips past the pre-checks.
         Map<StackKey, Integer> actual = new LinkedHashMap<>();
         for (int i = 0; i < 36; i++) {
-            ItemStack stack = inv.getItem(i);
+            ItemStack stack = inv.getStack(i);
             if (!stack.isEmpty()) {
                 actual.merge(countKey(stack), stack.getCount(), Integer::sum);
             }
         }
         for (BoxInfo box : plan.boxes) {
-            for (ItemStack stack : ShulkerRules.readContents(inv.getItem(box.invIndex))) {
+            for (ItemStack stack : ShulkerRules.readContents(inv.getStack(box.invIndex))) {
                 if (!stack.isEmpty()) {
                     actual.merge(countKey(stack), stack.getCount(), Integer::sum);
                 }
@@ -562,7 +562,7 @@ public final class ServerSorter {
             com.yeyang.crossshulkersort.CrossShulkerSortClient.LOGGER.error(
                     "[CSSort] POST-APPLY MISMATCH - rolling back everything");
             for (int i = 0; i < 36; i++) {
-                inv.setItem(i, inventory.get(i).copy());
+                inv.setStack(i, inventory.get(i).copy());
             }
             for (BoxInfo box : plan.boxes) {
                 List<ItemStack> contents = new ArrayList<>();
@@ -571,30 +571,32 @@ public final class ServerSorter {
                         contents.add(stack.copy());
                     }
                 }
-                ItemStack boxStack = inv.getItem(box.invIndex);
+                ItemStack boxStack = inv.getStack(box.invIndex);
                 if (contents.isEmpty()) {
-                    boxStack.set(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
+                    boxStack.set(DataComponentTypes.CONTAINER, ContainerComponent.DEFAULT);
                 } else {
-                    NonNullList<ItemStack> slots = NonNullList.withSize(ShulkerRules.BOX_SLOTS, ItemStack.EMPTY);
+                    DefaultedList<ItemStack> slots = DefaultedList.ofSize(ShulkerRules.BOX_SLOTS, ItemStack.EMPTY);
                     for (int s = 0; s < Math.min(contents.size(), ShulkerRules.BOX_SLOTS); s++) {
                         slots.set(s, contents.get(s));
                     }
-                    boxStack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(slots));
+                    boxStack.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(slots));
                 }
             }
-            player.inventoryMenu.broadcastChanges();
-            player.sendSystemMessage(Component.translatable("crossshulkersort.err.internal"));
+            player.playerScreenHandler.syncState();
+        player.playerScreenHandler.sendContentUpdates();
+            player.sendMessage(Text.translatable("crossshulkersort.err.internal"));
             return 2; // state restored to the pre-sort snapshot
         }
 
-        player.inventoryMenu.broadcastChanges();
+        player.playerScreenHandler.syncState();
+        player.playerScreenHandler.sendContentUpdates();
         List<ItemStack> liveInv = new ArrayList<>(36);
         for (int i = 0; i < 36; i++) {
-            liveInv.add(inv.getItem(i).copy());
+            liveInv.add(inv.getStack(i).copy());
         }
         List<List<ItemStack>> liveBoxes = new ArrayList<>(plan.boxes.size());
         for (BoxInfo bx : plan.boxes) {
-            liveBoxes.add(ShulkerRules.readContents(inv.getItem(bx.invIndex)));
+            liveBoxes.add(ShulkerRules.readContents(inv.getStack(bx.invIndex)));
         }
         if (signature(liveInv, liveBoxes).equals(sigBefore)) {
             return 3;
@@ -704,7 +706,7 @@ public final class ServerSorter {
     private static StackKey countKey(ItemStack stack) {
         if (ShulkerRules.isShulkerBoxItem(stack)) {
             ItemStack stripped = stack.copy();
-            stripped.remove(DataComponents.CONTAINER);
+            stripped.remove(DataComponentTypes.CONTAINER);
             return new StackKey(stripped);
         }
         return new StackKey(stack);

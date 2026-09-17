@@ -1,19 +1,15 @@
 package com.yeyang.crossshulkersort.mixin;
 
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(AbstractContainerScreen.class)
+@Mixin(HandledScreen.class)
 public interface AbstractContainerScreenAccessor {
 
-    @Accessor("leftPos")
+    @Accessor("x")
     int crossshulkersort$getLeftPos();
 
-    @Accessor("topPos")
+    @Accessor("y")
     int crossshulkersort$getTopPos();
-
-    @Accessor("menu")
-    AbstractContainerMenu crossshulkersort$getMenu();
 }

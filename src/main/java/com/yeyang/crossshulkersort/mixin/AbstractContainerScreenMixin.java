@@ -2,16 +2,16 @@ package com.yeyang.crossshulkersort.mixin;
 
 import com.yeyang.crossshulkersort.CrossShulkerSortClient;
 import com.yeyang.crossshulkersort.gui.QSortButton;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.screen.ScreenHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(AbstractContainerScreen.class)
-public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMenu> {
+@Mixin(HandledScreen.class)
+public abstract class AbstractContainerScreenMixin<T extends ScreenHandler> {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void crossshulkersort$addSortButton(CallbackInfo ci) {

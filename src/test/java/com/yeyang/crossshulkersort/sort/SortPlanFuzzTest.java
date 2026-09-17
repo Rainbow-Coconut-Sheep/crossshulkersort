@@ -1,16 +1,13 @@
 package com.yeyang.crossshulkersort.sort;
 
+import net.minecraft.Bootstrap;
 import net.minecraft.SharedConstants;
-import net.minecraft.core.component.DataComponentInitializers;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.data.registries.VanillaRegistries;
-import net.minecraft.server.Bootstrap;
-import net.minecraft.world.entity.EntityEquipment;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.ContainerComponent;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,10 +19,8 @@ public final class SortPlanFuzzTest {
     private SortPlanFuzzTest() {}
 
     public static void main(String[] args) throws Exception {
-        SharedConstants.tryDetectVersion();
-        Bootstrap.bootStrap();
-        net.minecraft.core.registries.BuiltInRegistries.DATA_COMPONENT_INITIALIZERS.build(VanillaRegistries.createLookup())
-                .forEach(DataComponentInitializers.PendingComponents::apply);
+        SharedConstants.createGameVersion();
+        Bootstrap.initialize();
         Class.forName(ServerSorter.class.getName(), true, ServerSorter.class.getClassLoader());
 
         Item[] pool64 = new Item[]{Items.DROPPER, Items.STONE, Items.DIRT, Items.COBBLESTONE, Items.HOPPER, Items.BONE_BLOCK, Items.COMPOSTER, Items.IRON_TRAPDOOR, Items.CHEST};
@@ -37,7 +32,7 @@ public final class SortPlanFuzzTest {
         for (long seed = 1; seed <= 5000; seed++) {
             Random r = new Random(seed);
             int boxCount = 4 + r.nextInt(4); // 4..7
-            Inventory inv = new Inventory(null, new EntityEquipment());
+            PlayerInventory inv = new PlayerInventory(null);
             // fill all 36 slots: boxes in random slots, loose elsewhere
             List<Integer> slots = new ArrayList<>();
             for (int i = 0; i < 36; i++) slots.add(i);
@@ -52,16 +47,16 @@ public final class SortPlanFuzzTest {
                     contents.add(randomStack(r, pool64, pool16, pool1));
                 }
                 ItemStack box = new ItemStack(Items.SHULKER_BOX);
-                box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(contents));
-                inv.setItem(invSlot, box);
+                box.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(contents));
+                inv.setStack(invSlot, box);
             }
             // loose items in remaining slots
             for (int i = boxCount; i < 36; i++) {
                 int invSlot = slots.get(i);
                 if (r.nextDouble() < 0.4) {
-                    inv.setItem(invSlot, randomStack(r, pool64, pool16, pool1));
+                    inv.setStack(invSlot, randomStack(r, pool64, pool16, pool1));
                 } else {
-                    inv.setItem(invSlot, ItemStack.EMPTY);
+                    inv.setStack(invSlot, ItemStack.EMPTY);
                 }
             }
             SortPlan plan;
@@ -81,7 +76,7 @@ public final class SortPlanFuzzTest {
                 boolean isBox = false;
                 for (SortPlan.BoxInfo b : plan.boxes) if (b.invIndex == i) { isBox = true; break; }
                 if (isBox) continue;
-                ItemStack st = inv.getItem(i);
+                ItemStack st = inv.getStack(i);
                 if (!st.isEmpty() && !ShulkerRules.isShulkerBoxItem(st)) pool.merge(new StackKey(st), st.getCount(), Integer::sum);
             }
             for (SortPlan.BoxInfo b : plan.boxes) {
@@ -124,7 +119,7 @@ public final class SortPlanFuzzTest {
                     boolean hasUnstack = false;
                     for (StackKey key : box.quota.keySet()) {
                         if (ShulkerRules.isShulkerBoxItem(key.stack())) continue;
-                        if (key.stack().getMaxStackSize() <= 1) hasUnstack = true;
+                        if (key.stack().getMaxCount() <= 1) hasUnstack = true;
                         else hasStack = true;
                     }
                     if (hasStack && hasUnstack) {
@@ -154,7 +149,7 @@ public final class SortPlanFuzzTest {
         return new ItemStack(item, count);
     }
 
-    private static void dumpPlan(long seed, Inventory inv, SortPlan plan, Map<StackKey,Integer> pool, Map<StackKey,Integer> quotaSum) {
+    private static void dumpPlan(long seed, PlayerInventory inv, SortPlan plan, Map<StackKey,Integer> pool, Map<StackKey,Integer> quotaSum) {
         System.out.println("  seed=" + seed + " boxes=" + plan.boxes.size() + " chosen=" + plan.chosen.size() + " excess=" + plan.excess.size());
         for (int b = 0; b < plan.chosen.size(); b++) {
             SortPlan.BoxInfo box = plan.chosen.get(b);

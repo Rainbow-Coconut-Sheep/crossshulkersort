@@ -2,10 +2,11 @@ package com.yeyang.crossshulkersort.config;
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.text.Text;
 
 /**
  * ModMenu integration. Soft dependency: this class is only ever loaded when
@@ -29,12 +30,12 @@ public class ModMenuEntry implements ModMenuApi {
         }
     }
 
-    private static Component t(String key) {
-        return Component.translatable("crossshulkersort." + key);
+    private static Text t(String key) {
+        return Text.translatable("crossshulkersort." + key);
     }
 
-    private static Component tt(String key) {
-        return Component.translatable("crossshulkersort." + key + ".tooltip");
+    private static Text tt(String key) {
+        return Text.translatable("crossshulkersort." + key + ".tooltip");
     }
 
     private static Screen buildCloth(Screen parent) {
@@ -118,17 +119,16 @@ public class ModMenuEntry implements ModMenuApi {
         return new Screen(t("config.title")) {
             @Override
             protected void init() {
-                this.addRenderableWidget(Button.builder(t("config.back"),
-                        btn -> Minecraft.getInstance().setScreenAndShow(parent))
-                        .bounds(this.width / 2 - 100, this.height - 30, 200, 20).build());
+                this.addDrawableChild(ButtonWidget.builder(t("config.back"),
+                        btn -> MinecraftClient.getInstance().setScreen(parent))
+                        .dimensions(this.width / 2 - 100, this.height - 30, 200, 20).build());
             }
 
             @Override
-            public void extractRenderState(net.minecraft.client.gui.GuiGraphicsExtractor context,
-                                           int mouseX, int mouseY, float deltaTicks) {
-                super.extractRenderState(context, mouseX, mouseY, deltaTicks);
-                context.centeredText(Minecraft.getInstance().font, t("config.needCloth"),
-                        this.width / 2, this.height / 2 - 10, 0xFFFFFF);
+            public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+                super.render(context, mouseX, mouseY, delta);
+                context.drawCenteredTextWithShadow(MinecraftClient.getInstance().textRenderer,
+                        t("config.needCloth"), this.width / 2, this.height / 2 - 10, 0xFFFFFF);
             }
         };
     }

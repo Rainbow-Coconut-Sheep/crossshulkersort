@@ -1,6 +1,6 @@
 package com.yeyang.crossshulkersort.sort;
 
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.item.ItemStack;
 
 /**
  * Identity of an item stack ignoring its count (same item + same data components).
@@ -20,7 +20,7 @@ public final class StackKey {
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof StackKey other && ItemStack.isSameItemSameComponents(this.stack, other.stack);
+        return obj instanceof StackKey other && ItemStack.areItemsAndComponentsEqual(this.stack, other.stack);
     }
 
     @Override

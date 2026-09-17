@@ -3,7 +3,7 @@
 	"id": "crossshulkersort",
 	"name": "Cross Shulker Sort 跨潜影盒整理",
 	"version": "${mod_version}",
-	"description": "One-click cross-shulker-box sorting for the player inventory: packs loose items into plain shulker boxes and consolidates their contents to minimize the number of boxes used. Requires Quick Shulker (opening boxes) and Item Scroller (item moving).",
+	"description": "One-click cross-shulker-box sorting for the player inventory: packs loose items into plain shulker boxes and consolidates their contents to minimize the number of boxes used. Server-side logic, no click emulation; Item Scroller order is mirrored when installed.",
 	"authors": [
 		"Yeyang"
 	],
@@ -25,8 +25,8 @@
 		"crossshulkersort.mixins.json"
 	],
 	"depends": {
-		"minecraft": ">=26.2 <26.3",
-		"fabricloader": ">=0.19.3",
+		"minecraft": ">=1.21.1 <1.21.2",
+		"fabricloader": ">=0.16.0",
 		"fabric-api": "*"
 	},
 	"suggests": {

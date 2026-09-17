@@ -1,11 +1,13 @@
 package com.yeyang.crossshulkersort.sort;
 
-import net.minecraft.core.component.DataComponentType;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.component.TypedDataComponent;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.component.Component;
+import net.minecraft.component.ComponentType;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.ContainerComponent;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.block.ShulkerBoxBlock;
 
 import java.util.List;
 import java.util.Objects;
@@ -54,9 +56,9 @@ public final class ShulkerRules {
             return true;
         }
         ItemStack fresh = new ItemStack(stack.getItem());
-        for (TypedDataComponent<?> typed : stack.getComponents()) {
-            DataComponentType<?> type = typed.type();
-            if (type == DataComponents.CONTAINER) {
+        for (Component<?> typed : stack.getComponents()) {
+            ComponentType<?> type = typed.type();
+            if (type == DataComponentTypes.CONTAINER) {
                 continue;
             }
             if (Objects.equals(fresh.get(type), stack.get(type))) {
@@ -68,8 +70,8 @@ public final class ShulkerRules {
     }
 
     public static List<ItemStack> readContents(ItemStack box) {
-        return box.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY)
-                .nonEmptyItemCopyStream()
+        return box.getOrDefault(DataComponentTypes.CONTAINER, ContainerComponent.DEFAULT)
+                .streamNonEmpty()
                 .toList();
     }
 
@@ -78,8 +80,8 @@ public final class ShulkerRules {
         if (stack.isEmpty()) {
             return false;
         }
-        return stack.getItem() instanceof net.minecraft.world.item.BlockItem blockItem
-                && blockItem.getBlock() instanceof net.minecraft.world.level.block.ShulkerBoxBlock;
+        return stack.getItem() instanceof BlockItem blockItem
+                && blockItem.getBlock() instanceof ShulkerBoxBlock;
     }
 
     public static boolean isLockedFull(ItemStack box) {
@@ -95,6 +97,6 @@ public final class ShulkerRules {
             }
             total += stack.getCount();
         }
-        return total >= BOX_SLOTS * contents.get(0).getMaxStackSize();
+        return total >= BOX_SLOTS * contents.get(0).getMaxCount();
     }
 }

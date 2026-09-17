@@ -1,8 +1,9 @@
 package com.yeyang.crossshulkersort.sort;
 
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -38,7 +39,7 @@ public final class SortPlan {
 
     /** Active stack order; the client injects Item Scroller's mirrored comparator. */
     public static Comparator<ItemStack> SORT_ORDER = Comparator
-            .comparing((ItemStack s) -> BuiltInRegistries.ITEM.getKey(s.getItem()).toString())
+            .comparing((ItemStack s) -> Registries.ITEM.getId(s.getItem()).toString())
             .thenComparing(s -> s.getComponents().hashCode())
             .thenComparing(s -> -s.getCount());
 
@@ -70,7 +71,7 @@ public final class SortPlan {
     /** Fallback bulk threshold when no config is loaded (dedicated boot). */
     public static final int BULK_MIN_STACKS = 6;
 
-    public static SortPlan compute(Inventory inv) {
+    public static SortPlan compute(PlayerInventory inv) {
         return compute(inv, null);
     }
 
@@ -78,13 +79,13 @@ public final class SortPlan {
      * @param detected ground-truth contents per box inv slot, read from the live menus
      *                 during the detection phase (null = read item components instead)
      */
-    public static SortPlan compute(Inventory inv, Map<Integer, List<ItemStack>> detected) {
+    public static SortPlan compute(PlayerInventory inv, Map<Integer, List<ItemStack>> detected) {
         SortPlan plan = new SortPlan();
         com.yeyang.crossshulkersort.config.ModConfig eff =
                 com.yeyang.crossshulkersort.config.ModConfig.effective();
 
         for (int i = 0; i < 36; i++) {
-            ItemStack stack = inv.getItem(i);
+            ItemStack stack = inv.getStack(i);
             if (ShulkerRules.isUsableBox(stack)) {
                 List<ItemStack> detectedContents = detected != null ? detected.get(i) : null;
                 plan.boxes.add(new BoxInfo(plan.boxes.size(), i, stack,
@@ -106,7 +107,7 @@ public final class SortPlan {
             if (boxSlots.contains(i)) {
                 continue;
             }
-            ItemStack stack = inv.getItem(i);
+            ItemStack stack = inv.getStack(i);
             if (!stack.isEmpty() && !ShulkerRules.isShulkerBoxItem(stack)) {
                 poolItems.merge(new StackKey(stack), stack.getCount(), Integer::sum);
             }
@@ -126,7 +127,7 @@ public final class SortPlan {
         int totalStacks = 0;
         for (Map.Entry<StackKey, Integer> entry : poolItems.entrySet()) {
             ItemStack proto = entry.getKey().stack();
-            int max = proto.getMaxStackSize();
+            int max = proto.getMaxCount();
             int items = entry.getValue();
             needs.add(new KeyNeed(entry.getKey(), items, max));
             totalStacks += (items + max - 1) / max;
@@ -172,7 +173,7 @@ public final class SortPlan {
                 int n = 0;
                 for (ItemStack stack : box.contents) {
                     if (!stack.isEmpty() && !ShulkerRules.isShulkerBoxItem(stack)
-                            && stack.getMaxStackSize() <= 1) {
+                            && stack.getMaxCount() <= 1) {
                         n += stack.getCount();
                     }
                 }
@@ -239,7 +240,7 @@ public final class SortPlan {
                 Map<StackKey, Integer> counts = new HashMap<>();
                 for (ItemStack stack : plan.chosen.get(b).contents) {
                     if (!stack.isEmpty() && !ShulkerRules.isShulkerBoxItem(stack)
-                            && stack.getMaxStackSize() <= 1) {
+                            && stack.getMaxCount() <= 1) {
                         counts.merge(new StackKey(stack), stack.getCount(), Integer::sum);
                     }
                 }
@@ -265,7 +266,7 @@ public final class SortPlan {
                     continue;
                 }
                 if (plan.reservedBoxes > 0
-                        && (key.stack().getMaxStackSize() <= 1)
+                        && (key.stack().getMaxCount() <= 1)
                                 != plan.reservedInv.contains(box.invIndex)) {
                     continue; // wrong stacking group for this box - becomes moving items
                 }
@@ -275,7 +276,7 @@ public final class SortPlan {
                     continue;
                 }
                 StackKey homeKey = key;
-                int home = (plan.reservedBoxes > 0 && key.stack().getMaxStackSize() <= 1)
+                int home = (plan.reservedBoxes > 0 && key.stack().getMaxCount() <= 1)
                         ? reserveHome.getOrDefault(homeKey, b)
                         : homeIdx.getOrDefault(homeKey, b);
                 if (eff.homeHealing && home == b) {
@@ -313,7 +314,7 @@ public final class SortPlan {
         java.util.Map<StackKey, Integer> classRankCache = new HashMap<>();
         java.util.function.ToIntFunction<Need> classRank = n -> classRankCache.computeIfAbsent(n.key,
                 k -> {
-                    int m = k.stack().getMaxStackSize();
+                    int m = k.stack().getMaxCount();
                     return m >= 64 ? 0 : (m >= 16 ? 1 : 2);
                 });
         work.sort((x, y) -> {
@@ -498,7 +499,7 @@ public final class SortPlan {
                 splits.sort((a, b) -> Integer.compare(totals.get(b), totals.get(a)));
                 for (StackKey key : splits) {
                     int splitTotal = totals.get(key);
-                    int max = key.stack().getMaxStackSize();
+                    int max = key.stack().getMaxCount();
                     boolean bulk = (splitTotal + max - 1) / max > ShulkerRules.BOX_SLOTS;
                     boolean ok = bulk
                             ? (eff.defragBulkEnabled && tryConsolidateBulk(plan, key, splitTotal))
@@ -525,8 +526,8 @@ public final class SortPlan {
             for (Map.Entry<StackKey, Integer> e : leftTotals.entrySet()) {
                 int frags = leftBoxes.getOrDefault(e.getKey(), 0);
                 if (frags > 1) {
-                    int stacks = (e.getValue() + e.getKey().stack().getMaxStackSize() - 1)
-                            / e.getKey().stack().getMaxStackSize();
+                    int stacks = (e.getValue() + e.getKey().stack().getMaxCount() - 1)
+                            / e.getKey().stack().getMaxCount();
                     int need = (stacks + ShulkerRules.BOX_SLOTS - 1) / ShulkerRules.BOX_SLOTS;
                     diag("[CSSort] defrag skip " + keyName(e.getKey()) + " x" + e.getValue()
                             + " (frags=" + frags + " need=" + need + ")");
@@ -550,7 +551,7 @@ public final class SortPlan {
                     if (ShulkerRules.isShulkerBoxItem(key.stack())) {
                         continue;
                     }
-                    int max = key.stack().getMaxStackSize();
+                    int max = key.stack().getMaxCount();
                     if (max <= 1) {
                         continue;
                     }
@@ -695,7 +696,7 @@ public final class SortPlan {
         if (plan.reservedBoxes <= 0) {
             return true;
         }
-        boolean needRes = key.stack().getMaxStackSize() <= 1;
+        boolean needRes = key.stack().getMaxCount() <= 1;
         boolean inRes = plan.reservedInv.contains(plan.chosen.get(b).invIndex);
         return needRes == inRes;
     }
@@ -729,7 +730,7 @@ public final class SortPlan {
     }
 
     private static int quotaStacks(StackKey key, int items) {
-        int max = key.stack().getMaxStackSize();
+        int max = key.stack().getMaxCount();
         return (items + max - 1) / max;
     }
 
@@ -993,7 +994,7 @@ public final class SortPlan {
      * failure restores every quota untouched.
      */
     private static boolean tryConsolidateBulk(SortPlan plan, StackKey key, int total) {
-        int max = key.stack().getMaxStackSize();
+        int max = key.stack().getMaxCount();
         int totalStacks = (total + max - 1) / max;
         int boxesNeeded = (totalStacks + ShulkerRules.BOX_SLOTS - 1) / ShulkerRules.BOX_SLOTS;
         List<BoxInfo> frags = new ArrayList<>();
@@ -1070,7 +1071,7 @@ public final class SortPlan {
         return true;
     }
 
-    private static boolean computeHasWork(SortPlan plan, Inventory inv, Set<Integer> boxSlots) {
+    private static boolean computeHasWork(SortPlan plan, PlayerInventory inv, Set<Integer> boxSlots) {
         // 1) every chosen box must match its quota exactly (per-type item counts, no
         //    unknown keys) and be sorted - this catches manual shuffling between boxes
         for (BoxInfo box : plan.chosen) {
@@ -1100,7 +1101,7 @@ public final class SortPlan {
             if (boxSlots.contains(i)) {
                 continue;
             }
-            ItemStack stack = inv.getItem(i);
+            ItemStack stack = inv.getStack(i);
             if (stack.isEmpty() || ShulkerRules.isShulkerBoxItem(stack)) {
                 continue;
             }
@@ -1140,11 +1141,11 @@ public final class SortPlan {
     }
 
     public static String keyName(StackKey key) {
-        return BuiltInRegistries.ITEM.getKey(key.stack().getItem()).toString();
+        return Registries.ITEM.getId(key.stack().getItem()).toString();
     }
 
     public static boolean sameStackExact(ItemStack a, ItemStack b) {
-        return a.getCount() == b.getCount() && ItemStack.isSameItemSameComponents(a, b);
+        return a.getCount() == b.getCount() && ItemStack.areItemsAndComponentsEqual(a, b);
     }
 
     public static boolean isUnsorted(List<ItemStack> contents) {
@@ -1199,8 +1200,8 @@ public final class SortPlan {
             this.initialFilled = filled;
         }
 
-        public void refreshContents(Inventory inv) {
-            this.contents = ShulkerRules.readContents(inv.getItem(this.invIndex));
+        public void refreshContents(PlayerInventory inv) {
+            this.contents = ShulkerRules.readContents(inv.getStack(this.invIndex));
         }
     }
 }

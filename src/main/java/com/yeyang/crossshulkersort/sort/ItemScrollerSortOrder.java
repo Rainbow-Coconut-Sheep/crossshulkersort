@@ -3,20 +3,23 @@ package com.yeyang.crossshulkersort.sort;
 import fi.dy.masa.itemscroller.config.Configs;
 import fi.dy.masa.itemscroller.util.SortingCategory;
 import fi.dy.masa.itemscroller.util.SortingMethod;
-import net.minecraft.client.Minecraft;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.ShulkerBoxBlock;
+import net.minecraft.block.ShulkerBoxBlock;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.ContainerComponent;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
 
 import java.util.Comparator;
 
 /**
  * Stack ordering that mirrors Item Scroller's own inventory-sort comparator, evaluated
  * against the user's live Item Scroller configuration (sort method, category order,
- * shulker/bundle placement, custom priorities). Falls back to raw-id ordering for any
+ * shulker placement, custom priorities). Falls back to raw-id ordering for any
  * configuration that cannot be read.
+ *
+ * <p>1.21.1 has no bundle item, so bundle placement is not special-cased here.
  */
 public final class ItemScrollerSortOrder {
 
@@ -30,8 +33,8 @@ public final class ItemScrollerSortOrder {
             return compareSafe(a, b);
         } catch (Throwable t) {
             return a.getItem() == b.getItem() ? 0
-                    : BuiltInRegistries.ITEM.getKey(a.getItem()).toString()
-                            .compareTo(BuiltInRegistries.ITEM.getKey(b.getItem()).toString());
+                    : Registries.ITEM.getId(a.getItem()).toString()
+                            .compareTo(Registries.ITEM.getId(b.getItem()).toString());
         }
     }
 
@@ -40,12 +43,6 @@ public final class ItemScrollerSortOrder {
         boolean bBox = isShulkerBox(b);
         if (boxesAtEnd() && aBox != bBox) {
             return Boolean.compare(aBox, bBox);
-        }
-
-        boolean aBundle = isBundle(a);
-        boolean bBundle = isBundle(b);
-        if (bundlesAtEnd() && aBundle != bBundle) {
-            return Boolean.compare(aBundle, bBundle);
         }
 
         boolean aEmpty = a.isEmpty();
@@ -59,9 +56,6 @@ public final class ItemScrollerSortOrder {
 
         if (aBox && bBox) {
             return Integer.compare(boxContentCount(a), boxContentCount(b));
-        }
-        if (aBundle && bBundle) {
-            return compareBundleOccupancy(a, b);
         }
 
         SortingMethod method = sortMethod();
@@ -80,7 +74,7 @@ public final class ItemScrollerSortOrder {
 
         if (a.getItem() != b.getItem()) {
             if (method == SortingMethod.CATEGORY_NAME || method == SortingMethod.ITEM_NAME) {
-                return a.getHoverName().getString().compareTo(b.getHoverName().getString());
+                return a.getName().getString().compareTo(b.getName().getString());
             }
             if (method == SortingMethod.CATEGORY_COUNT || method == SortingMethod.ITEM_COUNT) {
                 int byCount = Integer.compare(b.getCount(), a.getCount());
@@ -92,7 +86,7 @@ public final class ItemScrollerSortOrder {
             }
             return rawId(a) - rawId(b);
         }
-        if (!ItemStack.isSameItemSameComponents(a, b)) {
+        if (!ItemStack.areItemsAndComponentsEqual(a, b)) {
             return Integer.compare(a.getComponents().hashCode(), b.getComponents().hashCode());
         }
         return Integer.compare(b.getCount(), a.getCount());
@@ -117,8 +111,8 @@ public final class ItemScrollerSortOrder {
     private static Object cachedDisplayContext;
 
     private static Integer categoryIndex(ItemStack stack) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc.world == null) {
             return null;
         }
         if (cachedDisplayContext == null) {
@@ -141,7 +135,7 @@ public final class ItemScrollerSortOrder {
     }
 
     private static int rawId(ItemStack stack) {
-        return BuiltInRegistries.ITEM.getId(stack.getItem());
+        return Registries.ITEM.getRawId(stack.getItem());
     }
 
     private static boolean boxesAtEnd() {
@@ -152,33 +146,14 @@ public final class ItemScrollerSortOrder {
         }
     }
 
-    private static boolean bundlesAtEnd() {
-        try {
-            return Configs.Generic.SORT_BUNDLES_AT_END.getBooleanValue();
-        } catch (Throwable t) {
-            return true;
-        }
-    }
-
     private static boolean isShulkerBox(ItemStack stack) {
-        return !stack.isEmpty() && stack.getItem() instanceof net.minecraft.world.item.BlockItem blockItem
+        return !stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem
                 && blockItem.getBlock() instanceof ShulkerBoxBlock;
     }
 
-    private static boolean isBundle(ItemStack stack) {
-        return !stack.isEmpty() && (stack.is(Items.BUNDLE)
-                || stack.getComponents().has(DataComponents.BUNDLE_CONTENTS));
-    }
-
     private static int boxContentCount(ItemStack box) {
-        return (int) box.getOrDefault(DataComponents.CONTAINER, net.minecraft.world.item.component.ItemContainerContents.EMPTY)
-                .nonEmptyItemCopyStream().count();
-    }
-
-    private static int compareBundleOccupancy(ItemStack a, ItemStack b) {
-        var b1 = a.getOrDefault(DataComponents.BUNDLE_CONTENTS, net.minecraft.world.item.component.BundleContents.EMPTY);
-        var b2 = b.getOrDefault(DataComponents.BUNDLE_CONTENTS, net.minecraft.world.item.component.BundleContents.EMPTY);
-        return b1.weight().getOrThrow().compareTo(b2.weight().getOrThrow());
+        return (int) box.getOrDefault(DataComponentTypes.CONTAINER, ContainerComponent.DEFAULT)
+                .streamNonEmpty().count();
     }
 
     /**

@@ -4,7 +4,7 @@ import com.yeyang.crossshulkersort.config.ModConfig;
 import com.yeyang.crossshulkersort.sort.SortPlan;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.item.ItemStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,8 +32,8 @@ public class CrossShulkerSortClient implements ClientModInitializer {
             SortPlan.setSortOrder(com.yeyang.crossshulkersort.sort.ItemScrollerSortOrder.COMPARATOR);
         } else {
             SortPlan.setSortOrder(Comparator
-                    .comparing((ItemStack s) -> net.minecraft.core.registries.BuiltInRegistries.ITEM
-                            .getKey(s.getItem()).toString())
+                    .comparing((ItemStack s) -> net.minecraft.registry.Registries.ITEM
+                            .getId(s.getItem()).toString())
                     .thenComparing(s -> s.getComponents().hashCode())
                     .thenComparing(s -> -s.getCount()));
         }

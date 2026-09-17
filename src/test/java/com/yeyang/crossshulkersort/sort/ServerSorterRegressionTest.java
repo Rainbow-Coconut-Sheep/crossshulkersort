@@ -1,18 +1,15 @@
 package com.yeyang.crossshulkersort.sort;
 
+import net.minecraft.Bootstrap;
 import net.minecraft.SharedConstants;
-import net.minecraft.core.component.DataComponentInitializers;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.data.registries.VanillaRegistries;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.Bootstrap;
-import net.minecraft.world.entity.EntityEquipment;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.ContainerComponent;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.registry.Registries;
+import net.minecraft.text.Text;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,10 +25,8 @@ public final class ServerSorterRegressionTest {
     }
 
     public static void main(String[] args) throws ClassNotFoundException {
-        SharedConstants.tryDetectVersion();
-        Bootstrap.bootStrap();
-        BuiltInRegistries.DATA_COMPONENT_INITIALIZERS.build(VanillaRegistries.createLookup())
-                .forEach(DataComponentInitializers.PendingComponents::apply);
+        SharedConstants.createGameVersion();
+        Bootstrap.initialize();
         Class.forName(ServerSorter.class.getName(), true, ServerSorter.class.getClassLoader());
         run("protected quota untouched", ServerSorterRegressionTest::protectedQuotaUntouched);
         run("surplus drains fully", ServerSorterRegressionTest::surplusDrainsFully);
@@ -146,7 +141,7 @@ public final class ServerSorterRegressionTest {
 
     private static void differentComponents() {
         ItemStack namedHome = dropper(40);
-        namedHome.set(DataComponents.CUSTOM_NAME, Component.literal("Named dropper"));
+        namedHome.set(DataComponentTypes.CUSTOM_NAME, Text.literal("Named dropper"));
         ItemStack namedMoved = namedHome.copyWithCount(15);
         StackKey namedKey = new StackKey(namedHome);
         check(!key().equals(namedKey), "component variants must have different keys");
@@ -185,13 +180,13 @@ public final class ServerSorterRegressionTest {
         List<ItemStack> nonhome = List.of(dropper(21),
                 new ItemStack(Items.DIRT, 64), new ItemStack(Items.COBBLESTONE, 64),
                 new ItemStack(Items.GRANITE, 64), new ItemStack(Items.DIORITE, 64));
-        Inventory inventory = new Inventory(null, new EntityEquipment());
-        inventory.setItem(0, box(home));
-        inventory.setItem(1, box(nonhome));
-        inventory.setItem(2, dropper(43));
+        PlayerInventory inventory = new PlayerInventory(null);
+        inventory.setStack(0, box(home));
+        inventory.setStack(1, box(nonhome));
+        inventory.setStack(2, dropper(43));
         List<ItemStack> inventoryBaseline = new ArrayList<>();
         for (int i = 0; i < 36; i++) {
-            inventoryBaseline.add(inventory.getItem(i).copy());
+            inventoryBaseline.add(inventory.getStack(i).copy());
         }
         List<ItemStack> homeBaseline = ShulkerRules.readContents(inventoryBaseline.get(0));
         List<ItemStack> nonhomeBaseline = ShulkerRules.readContents(inventoryBaseline.get(1));
@@ -206,7 +201,7 @@ public final class ServerSorterRegressionTest {
         pool.merge(new StackKey(inventoryBaseline.get(2)), inventoryBaseline.get(2).getCount(), Integer::sum);
         int totalStacks = 0;
         for (Map.Entry<StackKey, Integer> entry : pool.entrySet()) {
-            int max = entry.getKey().stack().getMaxStackSize();
+            int max = entry.getKey().stack().getMaxCount();
             totalStacks += (entry.getValue() + max - 1) / max;
         }
         check(totalStacks > 27, "fixture pool must require two boxes, got " + totalStacks + " stacks");
@@ -215,8 +210,8 @@ public final class ServerSorterRegressionTest {
         check(count(nonhomeBaseline, dropperKey) == 21, "fixture nonhome must contain 21 droppers");
         check(pool.getOrDefault(dropperKey, 0) == 213, "source snapshot pool must contain 213 droppers");
         for (int slot = 0; slot < 2; slot++) {
-            check(ShulkerRules.isEligibleBox(inventory.getItem(slot)), "fixture box must be eligible: " + slot);
-            check(!ShulkerRules.isLockedFull(inventory.getItem(slot)), "fixture box must not be locked: " + slot);
+            check(ShulkerRules.isEligibleBox(inventory.getStack(slot)), "fixture box must be eligible: " + slot);
+            check(!ShulkerRules.isLockedFull(inventory.getStack(slot)), "fixture box must not be locked: " + slot);
         }
         SortPlan plan = SortPlan.compute(inventory);
         check(plan.boxes.size() == 2, "planner must detect two eligible boxes");
@@ -244,7 +239,7 @@ public final class ServerSorterRegressionTest {
                 + ", chosen=" + plan.chosen.size() + ", dropperPool=" + pool.get(dropperKey)
                 + ", homeQuota=" + homeQuota + ", nonhomeQuota=" + nonhomeQuota
                 + ", quotaSum=" + quotaSum + ", sourceHome=" + sourceHome
-                + ", sourceNonhome=" + sourceNonhome + ", loose=" + inventory.getItem(2).getCount());
+                + ", sourceNonhome=" + sourceNonhome + ", loose=" + inventory.getStack(2).getCount());
         check(quotaSum <= 213, "dropper quota exceeds source pool: " + quotaSum);
         for (Map.Entry<StackKey, Integer> entry : quotaTotals.entrySet()) {
             check(entry.getValue() >= 0 && entry.getValue() <= pool.getOrDefault(entry.getKey(), 0),
@@ -263,16 +258,16 @@ public final class ServerSorterRegressionTest {
         }
         check(sourceHome == 149, "planner home snapshot must remain 149, got " + sourceHome);
         check(sourceNonhome == 21, "planner nonhome snapshot must remain 21, got " + sourceNonhome);
-        check(sourceHome + sourceNonhome + inventory.getItem(2).getCount() == 213,
+        check(sourceHome + sourceNonhome + inventory.getStack(2).getCount() == 213,
                 "planner source snapshots plus loose droppers must remain 213");
         check(count(homeBaseline, dropperKey) == 149, "independent home baseline changed");
         check(count(nonhomeBaseline, dropperKey) == 21, "independent nonhome baseline changed");
-        check(count(ShulkerRules.readContents(inventory.getItem(0)), dropperKey) == 149,
+        check(count(ShulkerRules.readContents(inventory.getStack(0)), dropperKey) == 149,
                 "live home contents changed during planning");
-        check(count(ShulkerRules.readContents(inventory.getItem(1)), dropperKey) == 21,
+        check(count(ShulkerRules.readContents(inventory.getStack(1)), dropperKey) == 21,
                 "live nonhome contents changed during planning");
         for (int i = 0; i < 36; i++) {
-            check(SortPlan.sameStackExact(inventory.getItem(i), inventoryBaseline.get(i)),
+            check(SortPlan.sameStackExact(inventory.getStack(i), inventoryBaseline.get(i)),
                     "planning changed inventory item/components/count at slot " + i);
         }
     }
@@ -280,7 +275,7 @@ public final class ServerSorterRegressionTest {
     private static void defragPullsHopperHome() {
         Item[] singles = new Item[]{Items.OAK_BUTTON, Items.OAK_FENCE, Items.BAMBOO_FENCE_GATE,
                 Items.SOUL_SAND, Items.BONE, Items.OAK_TRAPDOOR, Items.OAK_SIGN, Items.TARGET,
-                Items.PALE_OAK_SIGN, Items.GUNPOWDER, Items.GOLD_NUGGET, Items.PHANTOM_MEMBRANE,
+                Items.OAK_SIGN, Items.GUNPOWDER, Items.GOLD_NUGGET, Items.PHANTOM_MEMBRANE,
                 Items.LEAD, Items.OAK_DOOR, Items.OAK_SLAB, Items.OAK_PRESSURE_PLATE,
                 Items.POTATO, Items.IRON_NUGGET, Items.SNOWBALL, Items.ROTTEN_FLESH,
                 Items.DETECTOR_RAIL, Items.ACTIVATOR_RAIL};
@@ -294,9 +289,9 @@ public final class ServerSorterRegressionTest {
         List<ItemStack> other = new ArrayList<>(List.of(
                 new ItemStack(Items.HOPPER, 64), new ItemStack(Items.HOPPER, 57),
                 new ItemStack(Items.DIRT, 64)));
-        Inventory inventory = new Inventory(null, new EntityEquipment());
-        inventory.setItem(0, box(home));
-        inventory.setItem(1, box(other));
+        PlayerInventory inventory = new PlayerInventory(null);
+        inventory.setStack(0, box(home));
+        inventory.setStack(1, box(other));
         SortPlan plan = SortPlan.compute(inventory);
         check(plan.chosen.size() == 2, "defrag fixture must choose both boxes, got " + plan.chosen.size());
         StackKey hopperKey = new StackKey(new ItemStack(Items.HOPPER, 1));
@@ -328,8 +323,8 @@ public final class ServerSorterRegressionTest {
     private static void topUpFillsPartialFromLoose() {
         Item[] singles = new Item[]{Items.OAK_BUTTON, Items.OAK_FENCE, Items.BAMBOO_FENCE_GATE,
                 Items.SOUL_SAND, Items.BONE, Items.OAK_TRAPDOOR, Items.OAK_SIGN, Items.TARGET,
-                Items.PALE_OAK_SIGN, Items.GUNPOWDER, Items.GOLD_NUGGET, Items.PHANTOM_MEMBRANE,
-                Items.LEAD, Items.OAK_BOAT, Items.MUSIC_DISC_CREATOR_MUSIC_BOX, Items.DIAMOND_SWORD,
+                Items.OAK_SIGN, Items.GUNPOWDER, Items.GOLD_NUGGET, Items.PHANTOM_MEMBRANE,
+                Items.LEAD, Items.OAK_BOAT, Items.MUSIC_DISC_PIGSTEP, Items.DIAMOND_SWORD,
                 Items.POTATO, Items.IRON_NUGGET, Items.SNOWBALL, Items.ROTTEN_FLESH,
                 Items.DETECTOR_RAIL, Items.ACTIVATOR_RAIL, Items.OAK_DOOR, Items.OAK_SLAB,
                 Items.OAK_STAIRS, Items.OAK_PRESSURE_PLATE};
@@ -337,9 +332,9 @@ public final class ServerSorterRegressionTest {
         for (Item single : singles) {
             home.add(new ItemStack(single, 1));
         }
-        Inventory inventory = new Inventory(null, new EntityEquipment());
-        inventory.setItem(0, box(home));
-        inventory.setItem(2, new ItemStack(Items.TRIPWIRE_HOOK, 36));
+        PlayerInventory inventory = new PlayerInventory(null);
+        inventory.setStack(0, box(home));
+        inventory.setStack(2, new ItemStack(Items.TRIPWIRE_HOOK, 36));
         SortPlan plan = SortPlan.compute(inventory);
         check(plan.chosen.size() == 1, "top-up fixture must choose one box, got " + plan.chosen.size());
         StackKey hookKey = new StackKey(new ItemStack(Items.TRIPWIRE_HOOK, 1));
@@ -360,9 +355,9 @@ public final class ServerSorterRegressionTest {
         for (int i = 0; i < 5; i++) {
             other.add(new ItemStack(Items.STONE, 64));
         }
-        Inventory inventory = new Inventory(null, new EntityEquipment());
-        inventory.setItem(0, box(mixed));
-        inventory.setItem(1, box(other));
+        PlayerInventory inventory = new PlayerInventory(null);
+        inventory.setStack(0, box(mixed));
+        inventory.setStack(1, box(other));
         SortPlan plan = SortPlan.compute(inventory);
         check(plan.chosen.size() == 2, "fixture must choose both boxes, got " + plan.chosen.size());
         check(plan.reservedBoxes == 1, "one trailing box must reserve for unstackables, got " + plan.reservedBoxes);
@@ -378,7 +373,7 @@ public final class ServerSorterRegressionTest {
                 if (ShulkerRules.isShulkerBoxItem(key.stack())) {
                     continue;
                 }
-                if (key.stack().getMaxStackSize() <= 1) {
+                if (key.stack().getMaxCount() <= 1) {
                     hasUnstackable = true;
                 } else {
                     hasStackable = true;
@@ -428,9 +423,9 @@ public final class ServerSorterRegressionTest {
         List<ItemStack> holder = new ArrayList<>(List.of(
                 new ItemStack(Items.DIAMOND_SWORD, 1), new ItemStack(Items.DIAMOND_SWORD, 1),
                 new ItemStack(Items.STONE, 64), new ItemStack(Items.STONE, 64)));
-        Inventory inventory = new Inventory(null, new EntityEquipment());
-        inventory.setItem(5, box(full));
-        inventory.setItem(1, box(holder));
+        PlayerInventory inventory = new PlayerInventory(null);
+        inventory.setStack(5, box(full));
+        inventory.setStack(1, box(holder));
         SortPlan plan = SortPlan.compute(inventory);
         check(plan.chosen.size() == 2, "fixture must choose both boxes, got " + plan.chosen.size());
         check(plan.reservedBoxes == 1, "one box must reserve, got " + plan.reservedBoxes);
@@ -487,12 +482,12 @@ public final class ServerSorterRegressionTest {
         for (int i = 0; i < 20; i++) {
             e.add(new ItemStack(Items.STONE, 64));
         }
-        Inventory inventory = new Inventory(null, new EntityEquipment());
-        inventory.setItem(0, box(a));
-        inventory.setItem(1, box(b));
-        inventory.setItem(2, box(c));
-        inventory.setItem(3, box(d));
-        inventory.setItem(4, box(e));
+        PlayerInventory inventory = new PlayerInventory(null);
+        inventory.setStack(0, box(a));
+        inventory.setStack(1, box(b));
+        inventory.setStack(2, box(c));
+        inventory.setStack(3, box(d));
+        inventory.setStack(4, box(e));
         SortPlan plan = SortPlan.compute(inventory);
         check(plan.chosen.size() == 5, "fixture must choose all five boxes, got " + plan.chosen.size());
         StackKey bulk = new StackKey(new ItemStack(Items.HOPPER, 1));
@@ -528,10 +523,10 @@ public final class ServerSorterRegressionTest {
         for (int i = 0; i < 20; i++) {
             c.add(new ItemStack(Items.STONE, 64));
         }
-        Inventory inventory = new Inventory(null, new EntityEquipment());
-        inventory.setItem(0, box(a));
-        inventory.setItem(1, box(b));
-        inventory.setItem(2, box(c));
+        PlayerInventory inventory = new PlayerInventory(null);
+        inventory.setStack(0, box(a));
+        inventory.setStack(1, box(b));
+        inventory.setStack(2, box(c));
         SortPlan plan = SortPlan.compute(inventory);
         check(plan.chosen.size() == 3, "fixture must choose all three boxes, got " + plan.chosen.size());
         StackKey bulk = new StackKey(new ItemStack(Items.HOPPER, 1));
@@ -558,7 +553,7 @@ public final class ServerSorterRegressionTest {
 
     private static ItemStack box(List<ItemStack> contents) {
         ItemStack stack = new ItemStack(Items.SHULKER_BOX);
-        stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(contents));
+        stack.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(contents));
         return stack;
     }
 
