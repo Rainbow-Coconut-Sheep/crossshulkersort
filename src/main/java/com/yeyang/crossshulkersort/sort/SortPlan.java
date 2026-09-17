@@ -40,7 +40,7 @@ public final class SortPlan {
     /** Active stack order; the client injects Item Scroller's mirrored comparator. */
     public static Comparator<ItemStack> SORT_ORDER = Comparator
             .comparing((ItemStack s) -> Registry.ITEM.getId(s.getItem()).toString())
-            .thenComparing(s -> java.util.Objects.hashCode(s.getNbt()))
+            .thenComparing(s -> java.util.Objects.hashCode(s.getTag()))
             .thenComparing(s -> -s.getCount());
 
     /** Called from the client entrypoint so in-game sorts mirror Item Scroller's order. */
@@ -121,7 +121,17 @@ public final class SortPlan {
             }
         }
 
-        record KeyNeed(StackKey key, int items, int max) {
+        // NOTE (Java 8 branch): plain class instead of a record.
+        final class KeyNeed {
+            final StackKey key;
+            final int items;
+            final int max;
+
+            KeyNeed(StackKey key, int items, int max) {
+                this.key = key;
+                this.items = items;
+                this.max = max;
+            }
         }
         List<KeyNeed> needs = new ArrayList<>();
         int totalStacks = 0;
@@ -154,8 +164,8 @@ public final class SortPlan {
         // every placement filter below enforces the same split.
         int ustacks = 0;
         for (KeyNeed need : needs) {
-            if (need.max() <= 1) {
-                ustacks += need.items(); // one slot per item
+            if (need.max <= 1) {
+                ustacks += need.items; // one slot per item
             }
         }
         if (eff.reservationEnabled && ustacks > 0 && plan.chosen.size() >= 2) {
@@ -224,8 +234,8 @@ public final class SortPlan {
         // excess holdings of bulk types ever become work.
         java.util.Set<StackKey> bulkKeep = new java.util.HashSet<>();
         for (KeyNeed need : needs) {
-            if ((need.items() + need.max() - 1) / need.max() > ShulkerRules.BOX_SLOTS) {
-                bulkKeep.add(need.key());
+            if ((need.items + need.max - 1) / need.max > ShulkerRules.BOX_SLOTS) {
+                bulkKeep.add(need.key);
             }
         }
         // unstackables choose their home only among the reserved trailing boxes so
@@ -297,9 +307,9 @@ public final class SortPlan {
         }
         List<Need> work = new ArrayList<>();
         for (KeyNeed need : needs) {
-            int toPlace = need.items() - homeKept.getOrDefault(need.key(), 0);
+            int toPlace = need.items - homeKept.getOrDefault(need.key, 0);
             if (toPlace > 0) {
-                work.add(new Need(need.key(), toPlace, need.max()));
+                work.add(new Need(need.key, toPlace, need.max));
             }
         }
         // ---- packing: all types are queued in Item Scroller sort order - BULK types
@@ -599,7 +609,7 @@ public final class SortPlan {
         {
             Map<StackKey, Integer> poolCap = new LinkedHashMap<>();
             for (KeyNeed need : needs) {
-                poolCap.merge(need.key(), need.items(), Integer::sum);
+                poolCap.merge(need.key, need.items, Integer::sum);
             }
             Map<StackKey, Integer> quotaCapSum = new LinkedHashMap<>();
             for (BoxInfo box : plan.chosen) {
@@ -658,7 +668,7 @@ public final class SortPlan {
             }
             Map<StackKey, Integer> pool = new LinkedHashMap<>();
             for (KeyNeed need : needs) {
-                pool.put(need.key(), need.items());
+                pool.put(need.key, need.items);
             }
             for (Map.Entry<StackKey, Integer> e : quotaSum.entrySet()) {
                 int exist = pool.getOrDefault(e.getKey(), 0);
@@ -1146,7 +1156,7 @@ public final class SortPlan {
 
     public static boolean sameStackExact(ItemStack a, ItemStack b) {
         return a.getCount() == b.getCount() && ItemStack.areItemsEqual(a, b)
-                && java.util.Objects.equals(a.getNbt(), b.getNbt());
+                && java.util.Objects.equals(a.getTag(), b.getTag());
     }
 
     public static boolean isUnsorted(List<ItemStack> contents) {
@@ -1206,3 +1216,4 @@ public final class SortPlan {
         }
     }
 }
+

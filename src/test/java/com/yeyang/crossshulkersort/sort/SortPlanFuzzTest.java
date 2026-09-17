@@ -1,13 +1,13 @@
 package com.yeyang.crossshulkersort.sort;
 
 import net.minecraft.Bootstrap;
-import net.minecraft.SharedConstants;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +17,6 @@ public final class SortPlanFuzzTest {
     private SortPlanFuzzTest() {}
 
     public static void main(String[] args) throws Exception {
-        SharedConstants.createGameVersion();
         Bootstrap.initialize();
         Class.forName(ServerSorter.class.getName(), true, ServerSorter.class.getClassLoader());
 
@@ -163,3 +162,6 @@ public final class SortPlanFuzzTest {
         }
     }
 }
+
+
+

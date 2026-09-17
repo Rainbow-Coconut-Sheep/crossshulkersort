@@ -32,15 +32,18 @@ public final class ItemScrollerSortOrder {
         if (a.getItem() != b.getItem()) {
             return Registry.ITEM.getRawId(a.getItem()) - Registry.ITEM.getRawId(b.getItem());
         }
-        if (!ItemStack.areItemsEqual(a, b) || !java.util.Objects.equals(a.getNbt(), b.getNbt())) {
-            return Integer.compare(a.getNbt() == null ? 0 : a.getNbt().hashCode(),
-                    b.getNbt() == null ? 0 : b.getNbt().hashCode());
+        if (!ItemStack.areItemsEqual(a, b) || !java.util.Objects.equals(a.getTag(), b.getTag())) {
+            return Integer.compare(a.getTag() == null ? 0 : a.getTag().hashCode(),
+                    b.getTag() == null ? 0 : b.getTag().hashCode());
         }
         return Integer.compare(b.getCount(), a.getCount());
     }
 
     static boolean isShulkerBox(ItemStack stack) {
-        return !stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem
-                && blockItem.getBlock() instanceof ShulkerBoxBlock;
+        if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem)) {
+            return false;
+        }
+        return ((BlockItem) stack.getItem()).getBlock() instanceof ShulkerBoxBlock;
     }
 }
+

@@ -1,7 +1,6 @@
 package com.yeyang.crossshulkersort.sort;
 
 import net.minecraft.Bootstrap;
-import net.minecraft.SharedConstants;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -16,7 +15,6 @@ public final class ReserveDebugTest {
     private ReserveDebugTest() {}
 
     public static void main(String[] args) throws Exception {
-        SharedConstants.createGameVersion();
         Bootstrap.initialize();
         Class.forName(ServerSorter.class.getName(), true, ServerSorter.class.getClassLoader());
 
@@ -71,3 +69,6 @@ public final class ReserveDebugTest {
         }
     }
 }
+
+
+

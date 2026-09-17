@@ -69,13 +69,15 @@ public class ModConfig {
         Path path = path();
         if (Files.exists(path)) {
             try {
-                ModConfig loaded = GSON.fromJson(Files.readString(path), ModConfig.class);
+                ModConfig loaded = GSON.fromJson(
+                        new String(Files.readAllBytes(path), java.nio.charset.StandardCharsets.UTF_8),
+                        ModConfig.class);
                 if (loaded != null) {
                     loaded.clamp();
                     return loaded;
                 }
             } catch (Exception e) {
-                CrossShulkerSortClient.LOGGER.warn("Failed to read config, using defaults", e);
+                CrossShulkerSortClient.LOGGER.log(java.util.logging.Level.WARNING, "Failed to read config, using defaults", e);
             }
         }
         return new ModConfig();
@@ -94,9 +96,9 @@ public class ModConfig {
     public void save() {
         try {
             Files.createDirectories(path().getParent());
-            Files.writeString(path(), GSON.toJson(this));
+            Files.write(path(), GSON.toJson(this).getBytes(java.nio.charset.StandardCharsets.UTF_8));
         } catch (IOException e) {
-            CrossShulkerSortClient.LOGGER.warn("Failed to save config", e);
+            CrossShulkerSortClient.LOGGER.log(java.util.logging.Level.WARNING, "Failed to save config", e);
         }
     }
 

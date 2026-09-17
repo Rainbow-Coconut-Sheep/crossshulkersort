@@ -1,7 +1,6 @@
 package com.yeyang.crossshulkersort.sort;
 
 import net.minecraft.Bootstrap;
-import net.minecraft.SharedConstants;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -10,6 +9,9 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.text.Text;
 
 import java.util.ArrayList;
+import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +25,6 @@ public final class ServerSorterRegressionTest {
     }
 
     public static void main(String[] args) throws ClassNotFoundException {
-        SharedConstants.createGameVersion();
         Bootstrap.initialize();
         Class.forName(ServerSorter.class.getName(), true, ServerSorter.class.getClassLoader());
         run("protected quota untouched", ServerSorterRegressionTest::protectedQuotaUntouched);
@@ -66,27 +67,27 @@ public final class ServerSorterRegressionTest {
     }
 
     private static void protectedQuotaUntouched() {
-        Fixture fixture = new Fixture(List.of(List.of(dropper(64)), List.of(dropper(21))));
-        fixture.consume(List.of(Map.of(key(), 64), Map.<StackKey, Integer>of()), Map.of(key(), 9));
+        Fixture fixture = new Fixture(Arrays.asList(Arrays.asList(dropper(64)), Arrays.asList(dropper(21))));
+        fixture.consume(Arrays.asList(Collections.singletonMap(key(), 64), Collections.<StackKey, Integer>emptyMap()), Collections.singletonMap(key(), 9));
         fixture.expectCounts(0, 64);
         fixture.expectCounts(1, 12);
     }
 
     private static void surplusDrainsFully() {
-        Fixture fixture = new Fixture(List.of(List.of(dropper(21)), List.of(dropper(64))));
-        fixture.consume(List.of(Map.<StackKey, Integer>of(), Map.of(key(), 64)), Map.of(key(), 21));
+        Fixture fixture = new Fixture(Arrays.asList(Arrays.asList(dropper(21)), Arrays.asList(dropper(64))));
+        fixture.consume(Arrays.asList(Collections.<StackKey, Integer>emptyMap(), Collections.singletonMap(key(), 64)), Collections.singletonMap(key(), 21));
         fixture.expectCounts(0);
         fixture.expectCounts(1, 64);
     }
 
     private static void surplusPartialAcrossBoxes() {
-        Fixture fixture = new Fixture(List.of(
-                List.of(dropper(8), dropper(12)),
-                List.of(dropper(30)),
-                List.of(dropper(64)),
-                List.of(dropper(10))));
-        fixture.consume(List.of(Map.<StackKey, Integer>of(), Map.<StackKey, Integer>of(),
-                Map.of(key(), 64), Map.<StackKey, Integer>of()), Map.of(key(), 25));
+        Fixture fixture = new Fixture(Arrays.asList(
+                Arrays.asList(dropper(8), dropper(12)),
+                Arrays.asList(dropper(30)),
+                Arrays.asList(dropper(64)),
+                Arrays.asList(dropper(10))));
+        fixture.consume(Arrays.asList(Collections.<StackKey, Integer>emptyMap(), Collections.<StackKey, Integer>emptyMap(),
+                Collections.singletonMap(key(), 64), Collections.<StackKey, Integer>emptyMap()), Collections.singletonMap(key(), 25));
         fixture.expectCounts(0);
         fixture.expectCounts(1, 25);
         fixture.expectCounts(2, 64);
@@ -94,12 +95,12 @@ public final class ServerSorterRegressionTest {
     }
 
     private static void surplusExactAcrossBoxes() {
-        Fixture fixture = new Fixture(List.of(
-                List.of(dropper(8), dropper(12)),
-                List.of(dropper(64)),
-                List.of(dropper(30))));
-        fixture.consume(List.of(Map.<StackKey, Integer>of(), Map.of(key(), 64),
-                Map.<StackKey, Integer>of()), Map.of(key(), 50));
+        Fixture fixture = new Fixture(Arrays.asList(
+                Arrays.asList(dropper(8), dropper(12)),
+                Arrays.asList(dropper(64)),
+                Arrays.asList(dropper(30))));
+        fixture.consume(Arrays.asList(Collections.<StackKey, Integer>emptyMap(), Collections.singletonMap(key(), 64),
+                Collections.<StackKey, Integer>emptyMap()), Collections.singletonMap(key(), 50));
         fixture.expectCounts(0);
         fixture.expectCounts(1, 64);
         fixture.expectCounts(2);
@@ -109,11 +110,14 @@ public final class ServerSorterRegressionTest {
         ItemStack stone = new ItemStack(Items.STONE, 17);
         ItemStack nested = new ItemStack(Items.SHULKER_BOX);
         ItemStack unassigned = new ItemStack(Items.DIRT, 11);
-        Fixture fixture = new Fixture(List.of(
-                List.of(dropper(21), stone, nested, unassigned),
-                List.of(dropper(64))));
-        fixture.consume(List.of(Map.of(new StackKey(stone), 17), Map.of(key(), 64)),
-                Map.of(key(), 9, new StackKey(nested), 1));
+        Fixture fixture = new Fixture(Arrays.asList(
+                Arrays.asList(dropper(21), stone, nested, unassigned),
+                Arrays.asList(dropper(64))));
+        java.util.Map<StackKey, Integer> budget = new java.util.HashMap<>();
+        budget.put(key(), 9);
+        budget.put(new StackKey(nested), 1);
+        fixture.consume(Arrays.asList(Collections.singletonMap(new StackKey(stone), 17), Collections.singletonMap(key(), 64)),
+                budget);
         fixture.expectCounts(0, 12, 17, 1, 11);
         fixture.expectCounts(1, 64);
         fixture.expectKey(0, 1, new StackKey(stone));
@@ -122,33 +126,36 @@ public final class ServerSorterRegressionTest {
     }
 
     private static void emptyAndZeroBudgets() {
-        Fixture fixture = new Fixture(List.of(
-                List.of(ItemStack.EMPTY, dropper(21)), List.of(), List.of(dropper(64))));
-        fixture.consume(List.of(Map.<StackKey, Integer>of(), Map.<StackKey, Integer>of(),
-                Map.of(key(), 64)), Map.of());
+        Fixture fixture = new Fixture(Arrays.asList(
+                Arrays.asList(ItemStack.EMPTY, dropper(21)), Collections.emptyList(), Arrays.asList(dropper(64))));
+        fixture.consume(Arrays.asList(Collections.<StackKey, Integer>emptyMap(), Collections.<StackKey, Integer>emptyMap(),
+                Collections.singletonMap(key(), 64)), Collections.emptyMap());
         fixture.expectCounts(0, 0, 21);
         fixture.expectCounts(1);
         fixture.expectCounts(2, 64);
-        fixture.consume(List.of(Map.<StackKey, Integer>of(), Map.<StackKey, Integer>of(),
-                Map.of(key(), 64)), Map.of(key(), 0));
+        fixture.consume(Arrays.asList(Collections.<StackKey, Integer>emptyMap(), Collections.<StackKey, Integer>emptyMap(),
+                Collections.singletonMap(key(), 64)), Collections.singletonMap(key(), 0));
         fixture.expectCounts(0, 0, 21);
         fixture.expectCounts(1);
         fixture.expectCounts(2, 64);
-        new Fixture(List.of()).consume(List.of(), Map.of());
+        new Fixture(Collections.emptyList()).consume(Collections.emptyList(), Collections.emptyMap());
     }
 
     private static void differentComponents() {
         ItemStack namedHome = dropper(40);
-        namedHome.getOrCreateSubNbt("display").putString("Name", "{\"text\":\"Named dropper\"}");
+        namedHome.getOrCreateSubTag("display").putString("Name", "{\"text\":\"Named dropper\"}");
         ItemStack namedMoved = namedHome.copy();
         namedMoved.setCount(15);
         StackKey namedKey = new StackKey(namedHome);
         check(!key().equals(namedKey), "component variants must have different keys");
-        Fixture fixture = new Fixture(List.of(
-                List.of(dropper(64), namedMoved),
-                List.of(dropper(21), namedHome)));
-        fixture.consume(List.of(Map.of(key(), 64), Map.of(namedKey, 40)),
-                Map.of(key(), 9, namedKey, 5));
+        Fixture fixture = new Fixture(Arrays.asList(
+                Arrays.asList(dropper(64), namedMoved),
+                Arrays.asList(dropper(21), namedHome)));
+        java.util.Map<StackKey, Integer> namedBudget = new java.util.HashMap<StackKey, Integer>();
+        namedBudget.put(key(), 9);
+        namedBudget.put(namedKey, 5);
+        fixture.consume(Arrays.asList(Collections.singletonMap(key(), 64), Collections.singletonMap(namedKey, 40)),
+                namedBudget);
         fixture.expectCounts(0, 64, 10);
         fixture.expectCounts(1, 12, 40);
         fixture.expectKey(0, 0, key());
@@ -158,11 +165,11 @@ public final class ServerSorterRegressionTest {
     }
 
     private static void dropperQuota() {
-        Fixture fixture = new Fixture(List.of(
-                List.of(dropper(64), dropper(64), dropper(21), dropper(64)), List.of(dropper(21))));
+        Fixture fixture = new Fixture(Arrays.asList(
+                Arrays.asList(dropper(64), dropper(64), dropper(21), dropper(64)), Arrays.asList(dropper(21))));
         check(total(fixture.baseline.get(0)) + total(fixture.baseline.get(1)) == 234,
                 "fixture totals must be 234");
-        fixture.consume(List.of(Map.of(key(), 213), Map.<StackKey, Integer>of()), Map.of(key(), 21));
+        fixture.consume(Arrays.asList(Collections.singletonMap(key(), 213), Collections.<StackKey, Integer>emptyMap()), Collections.singletonMap(key(), 21));
         fixture.expectCounts(0, 64, 64, 21, 64);
         fixture.expectCounts(1);
         check(total(fixture.kept.get(0)) == 213, "box must retain its 213 quota");
@@ -172,11 +179,11 @@ public final class ServerSorterRegressionTest {
     }
 
     private static void planningDropperQuota(int stoneStacks, boolean hasCapacity) {
-        List<ItemStack> home = new ArrayList<>(List.of(dropper(64), dropper(64), dropper(21)));
+        List<ItemStack> home = new ArrayList<>(Arrays.asList(dropper(64), dropper(64), dropper(21)));
         for (int i = 0; i < stoneStacks; i++) {
             home.add(new ItemStack(Items.STONE, 64));
         }
-        List<ItemStack> nonhome = List.of(dropper(21),
+        List<ItemStack> nonhome = Arrays.asList(dropper(21),
                 new ItemStack(Items.DIRT, 64), new ItemStack(Items.COBBLESTONE, 64),
                 new ItemStack(Items.GRANITE, 64), new ItemStack(Items.DIORITE, 64));
         PlayerInventory inventory = new PlayerInventory(null);
@@ -285,7 +292,7 @@ public final class ServerSorterRegressionTest {
         for (Item single : singles) {
             home.add(new ItemStack(single, 1));
         }
-        List<ItemStack> other = new ArrayList<>(List.of(
+        List<ItemStack> other = new ArrayList<>(Arrays.asList(
                 new ItemStack(Items.HOPPER, 64), new ItemStack(Items.HOPPER, 57),
                 new ItemStack(Items.DIRT, 64)));
         PlayerInventory inventory = new PlayerInventory(null);
@@ -327,7 +334,7 @@ public final class ServerSorterRegressionTest {
                 Items.POTATO, Items.IRON_NUGGET, Items.SNOWBALL, Items.ROTTEN_FLESH,
                 Items.DETECTOR_RAIL, Items.ACTIVATOR_RAIL, Items.OAK_DOOR, Items.OAK_SLAB,
                 Items.OAK_STAIRS, Items.OAK_PRESSURE_PLATE};
-        List<ItemStack> home = new ArrayList<>(List.of(new ItemStack(Items.TRIPWIRE_HOOK, 62)));
+        List<ItemStack> home = new ArrayList<>(Arrays.asList(new ItemStack(Items.TRIPWIRE_HOOK, 62)));
         for (Item single : singles) {
             home.add(new ItemStack(single, 1));
         }
@@ -397,14 +404,14 @@ public final class ServerSorterRegressionTest {
     private static void trimAppendedMultiStack() {
         StackKey tnt = new StackKey(new ItemStack(Items.TNT, 1));
         List<List<ItemStack>> appended = new ArrayList<>();
-        appended.add(new ArrayList<>(List.of(new ItemStack(Items.TNT, 64), new ItemStack(Items.TNT, 46))));
-        appended.add(new ArrayList<>(List.of(new ItemStack(Items.STONE, 64))));
+        appended.add(new ArrayList<>(Arrays.asList(new ItemStack(Items.TNT, 64), new ItemStack(Items.TNT, 46))));
+        appended.add(new ArrayList<>(Arrays.asList(new ItemStack(Items.STONE, 64))));
         int removed = ServerSorter.trimAppended(appended, tnt, 110);
         check(removed == 110, "must trim both tnt stacks fully, removed " + removed);
         check(appended.get(0).isEmpty(), "tnt stacks must both be gone");
         check(appended.get(1).size() == 1, "stone stack must survive trimming");
         List<List<ItemStack>> partial = new ArrayList<>();
-        partial.add(new ArrayList<>(List.of(
+        partial.add(new ArrayList<>(Arrays.asList(
                 new ItemStack(Items.TNT, 64), new ItemStack(Items.TNT, 64), new ItemStack(Items.TNT, 64))));
         int removed2 = ServerSorter.trimAppended(partial, tnt, 100);
         int left = partial.get(0).stream().mapToInt(ItemStack::getCount).sum();
@@ -419,7 +426,7 @@ public final class ServerSorterRegressionTest {
         for (int i = 0; i < 24; i++) {
             full.add(new ItemStack(Items.STONE, 64));
         }
-        List<ItemStack> holder = new ArrayList<>(List.of(
+        List<ItemStack> holder = new ArrayList<>(Arrays.asList(
                 new ItemStack(Items.DIAMOND_SWORD, 1), new ItemStack(Items.DIAMOND_SWORD, 1),
                 new ItemStack(Items.STONE, 64), new ItemStack(Items.STONE, 64)));
         PlayerInventory inventory = new PlayerInventory(null);
@@ -435,7 +442,7 @@ public final class ServerSorterRegressionTest {
     private static void occupancyCountsPhysical() {
         // two partial stacks of one type occupy 2 slots even though quotas say 1
         SortPlan.BoxInfo box = new SortPlan.BoxInfo(0, 5, new ItemStack(Items.SHULKER_BOX),
-                List.of(new ItemStack(Items.STONE, 30), new ItemStack(Items.STONE, 30),
+                Arrays.asList(new ItemStack(Items.STONE, 30), new ItemStack(Items.STONE, 30),
                         new ItemStack(Items.DIRT, 64)));
         box.quota.put(new StackKey(new ItemStack(Items.STONE, 1)), 60);
         box.quota.put(new StackKey(new ItemStack(Items.DIRT, 1)), 64);
@@ -445,12 +452,12 @@ public final class ServerSorterRegressionTest {
     }
 
     private static void signatureDetectsChange() {
-        List<ItemStack> inv = List.of(new ItemStack(Items.STONE, 64), ItemStack.EMPTY);
-        List<List<ItemStack>> boxes = List.of(List.of(new ItemStack(Items.DIRT, 11)));
+        List<ItemStack> inv = Arrays.asList(new ItemStack(Items.STONE, 64), ItemStack.EMPTY);
+        List<List<ItemStack>> boxes = Arrays.asList(Arrays.asList(new ItemStack(Items.DIRT, 11)));
         String a = ServerSorter.signature(new ArrayList<>(inv), new ArrayList<>(boxes));
         String b = ServerSorter.signature(new ArrayList<>(inv), new ArrayList<>(boxes));
         check(a.equals(b), "identical states must fingerprint equal");
-        List<ItemStack> moved = new ArrayList<>(List.of(new ItemStack(Items.STONE, 63), ItemStack.EMPTY));
+        List<ItemStack> moved = new ArrayList<>(Arrays.asList(new ItemStack(Items.STONE, 63), ItemStack.EMPTY));
         check(!ServerSorter.signature(moved, new ArrayList<>(boxes)).equals(a),
                 "changed counts must fingerprint different");
     }
@@ -463,12 +470,12 @@ public final class ServerSorterRegressionTest {
         }
         a.add(new ItemStack(Items.COAL, 64));
         a.add(new ItemStack(Items.IRON_INGOT, 64));
-        List<ItemStack> b = new ArrayList<>(List.of(
+        List<ItemStack> b = new ArrayList<>(Arrays.asList(
                 new ItemStack(Items.HOPPER, 64), new ItemStack(Items.STONE, 64)));
         for (int i = 0; i < 19; i++) {
             b.add(new ItemStack(Items.STONE, 64));
         }
-        List<ItemStack> c = new ArrayList<>(List.of(new ItemStack(Items.HOPPER, 64)));
+        List<ItemStack> c = new ArrayList<>(Arrays.asList(new ItemStack(Items.HOPPER, 64)));
         for (int i = 0; i < 20; i++) {
             c.add(new ItemStack(Items.STONE, 64));
         }
@@ -477,7 +484,7 @@ public final class ServerSorterRegressionTest {
             d.add(new ItemStack(Items.HOPPER, 64));
         }
         d.add(new ItemStack(Items.GOLD_INGOT, 64));
-        List<ItemStack> e = new ArrayList<>(List.of(new ItemStack(Items.HOPPER, 64)));
+        List<ItemStack> e = new ArrayList<>(Arrays.asList(new ItemStack(Items.HOPPER, 64)));
         for (int i = 0; i < 20; i++) {
             e.add(new ItemStack(Items.STONE, 64));
         }
@@ -513,7 +520,7 @@ public final class ServerSorterRegressionTest {
             a.add(new ItemStack(Items.HOPPER, 64));
         }
         a.add(new ItemStack(Items.COAL, 64));
-        List<ItemStack> b = new ArrayList<>(List.of(
+        List<ItemStack> b = new ArrayList<>(Arrays.asList(
                 new ItemStack(Items.HOPPER, 64), new ItemStack(Items.HOPPER, 64)));
         for (int i = 0; i < 10; i++) {
             b.add(new ItemStack(Items.STONE, 64));
@@ -590,8 +597,8 @@ public final class ServerSorterRegressionTest {
             for (List<ItemStack> box : boxes) {
                 baseline.add(new ArrayList<>(box));
                 kept.add(new ArrayList<>(box));
-                counts.add(box.stream().map(ItemStack::getCount).toList());
-                keys.add(box.stream().map(StackKey::new).toList());
+                counts.add(box.stream().map(ItemStack::getCount).collect(Collectors.toList()));
+                keys.add(box.stream().map(StackKey::new).collect(Collectors.toList()));
             }
         }
 
@@ -620,7 +627,7 @@ public final class ServerSorterRegressionTest {
         }
 
         private void expectCounts(int box, int... expected) {
-            List<Integer> actual = kept.get(box).stream().map(ItemStack::getCount).toList();
+            List<Integer> actual = kept.get(box).stream().map(ItemStack::getCount).collect(Collectors.toList());
             List<Integer> wanted = new ArrayList<>();
             for (int count : expected) {
                 wanted.add(count);
@@ -635,3 +642,7 @@ public final class ServerSorterRegressionTest {
         }
     }
 }
+
+
+
+

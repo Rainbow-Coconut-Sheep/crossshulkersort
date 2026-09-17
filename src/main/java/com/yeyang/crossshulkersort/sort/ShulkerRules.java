@@ -52,7 +52,7 @@ public final class ShulkerRules {
         } else if (stack.getItem() != Items.SHULKER_BOX) {
             return false;
         }
-        NbtCompound tag = stack.getNbt();
+        NbtCompound tag = stack.getTag();
         if (tag == null) {
             return true;
         }
@@ -71,16 +71,18 @@ public final class ShulkerRules {
     /** display tag holding only a custom Name (no Lore) counts as "just named". */
     private static boolean isPlainDisplayName(NbtCompound tag) {
         NbtCompound display = tag.getCompound("display");
-        return display.contains("Name", NbtElement.STRING_TYPE) && !display.contains("Lore");
+        // NOTE (<=1.16 branch): NBT type ids as literals (8=string) - no *_TYPE constants yet.
+        return display.contains("Name", 8) && !display.contains("Lore");
     }
 
     public static List<ItemStack> readContents(ItemStack box) {
         List<ItemStack> out = new ArrayList<>();
-        NbtCompound tag = box.getSubNbt("BlockEntityTag");
-        if (tag == null || !tag.contains("Items", NbtElement.LIST_TYPE)) {
+        NbtCompound tag = box.getSubTag("BlockEntityTag");
+        // 9=list, 10=compound.
+        if (tag == null || !tag.contains("Items", 9)) {
             return out;
         }
-        NbtList list = tag.getList("Items", NbtElement.COMPOUND_TYPE);
+        NbtList list = tag.getList("Items", 10);
         for (NbtElement e : list) {
             ItemStack s = ItemStack.fromNbt((NbtCompound) e);
             if (!s.isEmpty()) {
@@ -104,9 +106,9 @@ public final class ShulkerRules {
             list.add(c);
         }
         if (list.isEmpty()) {
-            box.removeSubNbt("BlockEntityTag");
+            box.removeSubTag("BlockEntityTag");
         } else {
-            box.getOrCreateSubNbt("BlockEntityTag").put("Items", list);
+            box.getOrCreateSubTag("BlockEntityTag").put("Items", list);
         }
     }
 
@@ -115,8 +117,8 @@ public final class ShulkerRules {
         if (stack.isEmpty()) {
             return false;
         }
-        return stack.getItem() instanceof BlockItem blockItem
-                && blockItem.getBlock() instanceof ShulkerBoxBlock;
+        return stack.getItem() instanceof BlockItem
+                && ((BlockItem) stack.getItem()).getBlock() instanceof ShulkerBoxBlock;
     }
 
     public static boolean isLockedFull(ItemStack box) {
@@ -135,3 +137,4 @@ public final class ShulkerRules {
         return total >= BOX_SLOTS * contents.get(0).getMaxCount();
     }
 }
+

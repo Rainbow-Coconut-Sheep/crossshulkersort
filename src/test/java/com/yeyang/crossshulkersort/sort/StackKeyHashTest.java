@@ -1,12 +1,12 @@
 package com.yeyang.crossshulkersort.sort;
 
 import net.minecraft.Bootstrap;
-import net.minecraft.SharedConstants;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -14,7 +14,6 @@ public final class StackKeyHashTest {
     private StackKeyHashTest() {}
 
     public static void main(String[] args) throws Exception {
-        SharedConstants.createGameVersion();
         Bootstrap.initialize();
 
         // basic: two fresh droppers
@@ -25,18 +24,18 @@ public final class StackKeyHashTest {
         System.out.println("fresh dropper equals=" + ka.equals(kb) + " hashA=" + ka.hashCode() + " hashB=" + kb.hashCode());
 
         // via box read
-        List<ItemStack> contents = List.of(new ItemStack(Items.DROPPER, 64), new ItemStack(Items.DROPPER, 21));
+        List<ItemStack> contents = Arrays.asList(new ItemStack(Items.DROPPER, 64), new ItemStack(Items.DROPPER, 21));
         ItemStack box = new ItemStack(Items.SHULKER_BOX);
         ShulkerRules.writeContents(box, contents);
         List<ItemStack> read = ShulkerRules.readContents(box);
         System.out.println("read size=" + read.size());
         for (ItemStack s : read) {
             StackKey k = new StackKey(s);
-            System.out.println("read stack count=" + s.getCount() + " equalsFresh=" + k.equals(ka) + " hash=" + k.hashCode() + " nbt=" + s.getNbt());
+            System.out.println("read stack count=" + s.getCount() + " equalsFresh=" + k.equals(ka) + " hash=" + k.hashCode() + " nbt=" + s.getTag());
         }
         ItemStack a1 = a.copy();
         a1.setCount(1);
-        System.out.println("fresh nbt=" + a1.getNbt());
+        System.out.println("fresh nbt=" + a1.getTag());
 
         // copy sharing test: mutate original, check key hash stability
         ItemStack orig = new ItemStack(Items.STONE, 64);
@@ -48,11 +47,11 @@ public final class StackKeyHashTest {
 
         // nbt mutation sharing test
         ItemStack boxStack = new ItemStack(Items.SHULKER_BOX);
-        ShulkerRules.writeContents(boxStack, List.of(new ItemStack(Items.STONE, 5)));
+        ShulkerRules.writeContents(boxStack, Arrays.asList(new ItemStack(Items.STONE, 5)));
         StackKey kBox = new StackKey(boxStack);
         int hbBefore = kBox.hashCode();
         // mutate original box contents
-        ShulkerRules.writeContents(boxStack, List.of(new ItemStack(Items.DIRT, 7)));
+        ShulkerRules.writeContents(boxStack, Arrays.asList(new ItemStack(Items.DIRT, 7)));
         int hbAfter = kBox.hashCode();
         System.out.println("mutate box nbt hashBefore=" + hbBefore + " hashAfter=" + hbAfter + " stable=" + (hbBefore==hbAfter) + " equalsAfterMutate=" + kBox.equals(new StackKey(boxStack)));
 
@@ -67,7 +66,7 @@ public final class StackKeyHashTest {
             // sometimes put through box round-trip
             if (r.nextBoolean()) {
                 ItemStack bx = new ItemStack(Items.SHULKER_BOX);
-                ShulkerRules.writeContents(bx, List.of(s));
+                ShulkerRules.writeContents(bx, Arrays.asList(s));
                 List<ItemStack> rd = ShulkerRules.readContents(bx);
                 if (!rd.isEmpty()) s = rd.get(0);
             }
@@ -87,3 +86,7 @@ public final class StackKeyHashTest {
         System.out.println("hash contract violations=" + violations);
     }
 }
+
+
+
+

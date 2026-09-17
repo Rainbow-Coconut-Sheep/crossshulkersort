@@ -46,7 +46,7 @@ public final class ServerSorter {
                 }
             }
             int quota = box.quota.getOrDefault(key, 0);
-            com.yeyang.crossshulkersort.CrossShulkerSortClient.LOGGER.error(
+            com.yeyang.crossshulkersort.CrossShulkerSortClient.logSevere(
                     "[CSSort] trace {}: chosenBox[{}] (invSlot={}) held={} quota={}",
                     name, b, box.invIndex, held, quota);
         }
@@ -58,12 +58,12 @@ public final class ServerSorter {
                 }
             }
             if (held > 0) {
-                com.yeyang.crossshulkersort.CrossShulkerSortClient.LOGGER.error(
+                com.yeyang.crossshulkersort.CrossShulkerSortClient.logSevere(
                         "[CSSort] trace {}: excessBox (invSlot={}) held={}",
                         name, box.invIndex, held);
             }
         }
-        com.yeyang.crossshulkersort.CrossShulkerSortClient.LOGGER.error(
+        com.yeyang.crossshulkersort.CrossShulkerSortClient.logSevere(
                 "[CSSort] trace {}: before={} after={} (created/consumed amounts are in the created map)",
                 name, before.getOrDefault(key, 0), after.getOrDefault(key, 0));
     }
@@ -75,7 +75,7 @@ public final class ServerSorter {
      * conservation-checked with rollback, and only one summary chat line is sent.
      */
     public static void sort(ServerPlayerEntity player) {
-        PlayerInventory scan = player.getInventory();
+        PlayerInventory scan = player.inventory;
         Map<Integer, Boolean> wasFilled = new HashMap<>();
         for (int i = 0; i < 36; i++) {
             ItemStack stack = scan.getStack(i);
@@ -109,7 +109,7 @@ public final class ServerSorter {
             }
             return;
         }
-        PlayerInventory inv = player.getInventory();
+        PlayerInventory inv = player.inventory;
         int used = 0;
         int freed = 0;
         for (Map.Entry<Integer, Boolean> e : wasFilled.entrySet()) {
@@ -128,7 +128,7 @@ public final class ServerSorter {
     /** @return 0 nothing to do, 1 applied a round, 2 stopped with a message shown,
      * 3 applied bit-for-bit nothing (stuck - same state would plan identically) */
     private static int sortPass(ServerPlayerEntity player, boolean quiet) {
-        PlayerInventory inv = player.getInventory();
+        PlayerInventory inv = player.inventory;
         if (player.currentScreenHandler != player.playerScreenHandler) {
             // another container (e.g. an open shulker box) is showing: sorting now
             // would yank items out from under it, so refuse LOUDLY instead of dying
@@ -136,7 +136,7 @@ public final class ServerSorter {
             player.sendMessage(new TranslatableText("crossshulkersort.err.container"), false);
             return 2;
         }
-        if (!player.currentScreenHandler.getCursorStack().isEmpty()) {
+        if (!player.inventory.getCursorStack().isEmpty()) {
             // an item is on the cursor (e.g. another inventory mod was mid-action) -
             // rewriting slots now would strand it
             player.sendMessage(new TranslatableText("crossshulkersort.err.carried"), false);
@@ -158,9 +158,9 @@ public final class ServerSorter {
             return 0;
         }
         String sigBefore = signature(inventory,
-                plan.boxes.stream().map(bx -> bx.contents).toList());
+                plan.boxes.stream().map(bx -> bx.contents).collect(java.util.stream.Collectors.toList()));
 
-        List<Integer> boxInvSlots = plan.boxes.stream().map(b -> b.invIndex).toList();
+        List<Integer> boxInvSlots = plan.boxes.stream().map(b -> b.invIndex).collect(java.util.stream.Collectors.toList());
 
         // ---- phase 1: per chosen box, every physically present item counts towards
         // its quota wherever it sits (homes are a planning heuristic only and play
@@ -364,7 +364,7 @@ public final class ServerSorter {
             }
         }
         for (BoxInfo box : plan.excess) {
-            for (ItemStack stack : newBoxContents.getOrDefault(box.invIndex, List.of())) {
+            for (ItemStack stack : newBoxContents.getOrDefault(box.invIndex, java.util.Collections.<ItemStack>emptyList())) {
                 if (!stack.isEmpty()) {
                     after.merge(countKey(stack), stack.getCount(), Integer::sum);
                 }
@@ -390,7 +390,7 @@ public final class ServerSorter {
                 int surplus = after.getOrDefault(e.getKey(), 0) - e.getValue();
                 if (surplus > 0) {
                     int removed = trimAppended(appended, e.getKey(), surplus);
-                    com.yeyang.crossshulkersort.CrossShulkerSortClient.LOGGER.warn(
+                    com.yeyang.crossshulkersort.CrossShulkerSortClient.logWarning(
                             "[CSSort] over-assignment capped {}: trimmed {} of {} phantom items",
                             SortPlan.keyName(e.getKey()), removed, surplus);
                     if (removed < surplus) {
@@ -401,7 +401,7 @@ public final class ServerSorter {
             for (Map.Entry<StackKey, Integer> e : after.entrySet()) {
                 if (!before.containsKey(e.getKey())) {
                     int removed = trimAppended(appended, e.getKey(), e.getValue());
-                    com.yeyang.crossshulkersort.CrossShulkerSortClient.LOGGER.warn(
+                    com.yeyang.crossshulkersort.CrossShulkerSortClient.logWarning(
                             "[CSSort] unexpected type {}: trimmed {} of {}",
                             SortPlan.keyName(e.getKey()), removed, e.getValue());
                     if (removed < e.getValue()) {
@@ -411,7 +411,7 @@ public final class ServerSorter {
                     int surplus = after.get(e.getKey()) - before.get(e.getKey());
                     if (surplus < 0) {
                         deficit = true; // would lose items
-                        com.yeyang.crossshulkersort.CrossShulkerSortClient.LOGGER.error(
+                        com.yeyang.crossshulkersort.CrossShulkerSortClient.logSevere(
                                 "[CSSort] conservation DEFICIT {}: before={} after={} diff={}",
                                 SortPlan.keyName(e.getKey()), before.get(e.getKey()),
                                 after.get(e.getKey()), surplus);
@@ -422,7 +422,7 @@ public final class ServerSorter {
                 for (Map.Entry<StackKey, Integer> e : before.entrySet()) {
                     int other = after.getOrDefault(e.getKey(), 0);
                     if (other != e.getValue()) {
-                        com.yeyang.crossshulkersort.CrossShulkerSortClient.LOGGER.error(
+                        com.yeyang.crossshulkersort.CrossShulkerSortClient.logSevere(
                                 "[CSSort] conservation MISMATCH {}: before={} after={} diff={}",
                                 SortPlan.keyName(e.getKey()), e.getValue(), other, other - e.getValue());
                         dumpTypeTrace(plan, e.getKey(), before, after);
@@ -455,7 +455,7 @@ public final class ServerSorter {
                 }
             }
             for (BoxInfo box : plan.excess) {
-                for (ItemStack stack : newBoxContents.getOrDefault(box.invIndex, List.of())) {
+                for (ItemStack stack : newBoxContents.getOrDefault(box.invIndex, java.util.Collections.<ItemStack>emptyList())) {
                     if (!stack.isEmpty()) {
                         after.merge(countKey(stack), stack.getCount(), Integer::sum);
                     }
@@ -530,19 +530,19 @@ public final class ServerSorter {
             for (Map.Entry<StackKey, Integer> e : before.entrySet()) {
                 int other = actual.getOrDefault(e.getKey(), 0);
                 if (other != e.getValue()) {
-                    com.yeyang.crossshulkersort.CrossShulkerSortClient.LOGGER.error(
+                    com.yeyang.crossshulkersort.CrossShulkerSortClient.logSevere(
                             "[CSSort] POST-APPLY MISMATCH {}: before={} actual={} diff={}",
                             SortPlan.keyName(e.getKey()), e.getValue(), other, other - e.getValue());
                 }
             }
             for (Map.Entry<StackKey, Integer> e : actual.entrySet()) {
                 if (!before.containsKey(e.getKey())) {
-                    com.yeyang.crossshulkersort.CrossShulkerSortClient.LOGGER.error(
+                    com.yeyang.crossshulkersort.CrossShulkerSortClient.logSevere(
                             "[CSSort] POST-APPLY UNEXPECTED {}: actual={}",
                             SortPlan.keyName(e.getKey()), e.getValue());
                 }
             }
-            com.yeyang.crossshulkersort.CrossShulkerSortClient.LOGGER.error(
+            com.yeyang.crossshulkersort.CrossShulkerSortClient.logSevere(
                     "[CSSort] POST-APPLY MISMATCH - rolling back everything");
             for (int i = 0; i < 36; i++) {
                 inv.setStack(i, inventory.get(i).copy());
@@ -556,13 +556,13 @@ public final class ServerSorter {
                 }
                 ShulkerRules.writeContents(inv.getStack(box.invIndex), contents);
             }
-            player.playerScreenHandler.syncState();
+            // NOTE (<=1.16 branch): no syncState() here - content updates suffice.
         player.playerScreenHandler.sendContentUpdates();
             player.sendMessage(new TranslatableText("crossshulkersort.err.internal"), false);
             return 2; // state restored to the pre-sort snapshot
         }
 
-        player.playerScreenHandler.syncState();
+        // NOTE (<=1.16 branch): no syncState() here - content updates suffice.
         player.playerScreenHandler.sendContentUpdates();
         List<ItemStack> liveInv = new ArrayList<>(36);
         for (int i = 0; i < 36; i++) {
@@ -684,11 +684,11 @@ public final class ServerSorter {
     private static StackKey countKey(ItemStack stack) {
         if (ShulkerRules.isShulkerBoxItem(stack)) {
             ItemStack stripped = stack.copy();
-            NbtCompound tag = stripped.getNbt();
+            NbtCompound tag = stripped.getTag();
             if (tag != null) {
                 tag.remove("BlockEntityTag");
                 if (tag.isEmpty()) {
-                    stripped.setNbt(null);
+                    stripped.setTag(null);
                 }
             }
             return new StackKey(stripped);
@@ -696,4 +696,5 @@ public final class ServerSorter {
         return new StackKey(stack);
     }
 }
+
 

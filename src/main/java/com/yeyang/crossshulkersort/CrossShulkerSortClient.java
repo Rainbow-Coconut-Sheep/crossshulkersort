@@ -5,15 +5,41 @@ import com.yeyang.crossshulkersort.sort.SortPlan;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.item.ItemStack;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
+import java.util.logging.Logger;
 
 public class CrossShulkerSortClient implements ClientModInitializer {
 
     public static final String MOD_ID = "crossshulkersort";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    // NOTE (<=1.16 branch): java.util.logging - zero deps (no slf4j here).
+    public static final Logger LOGGER = Logger.getLogger(MOD_ID);
+
+    /** slf4j-style {} formatting on top of jul (keeps call sites version-independent). */
+    public static void logSevere(String pattern, Object... args) {
+        LOGGER.severe(format(pattern, args));
+    }
+
+    /** slf4j-style {} formatting on top of jul (keeps call sites version-independent). */
+    public static void logWarning(String pattern, Object... args) {
+        LOGGER.warning(format(pattern, args));
+    }
+
+    private static String format(String pattern, Object... args) {
+        StringBuilder sb = new StringBuilder();
+        int ai = 0;
+        int i = 0;
+        while (true) {
+            int j = pattern.indexOf("{}", i);
+            if (j < 0 || ai >= args.length) {
+                sb.append(pattern.substring(i));
+                break;
+            }
+            sb.append(pattern, i, j).append(args[ai++]);
+            i = j + 2;
+        }
+        return sb.toString();
+    }
 
     private static ModConfig config;
 
@@ -34,7 +60,7 @@ public class CrossShulkerSortClient implements ClientModInitializer {
             SortPlan.setSortOrder(Comparator
                     .comparing((ItemStack s) -> net.minecraft.util.registry.Registry.ITEM
                             .getId(s.getItem()).toString())
-                    .thenComparing(s -> java.util.Objects.hashCode(s.getNbt()))
+                    .thenComparing(s -> java.util.Objects.hashCode(s.getTag()))
                     .thenComparing(s -> -s.getCount()));
         }
     }
@@ -53,3 +79,4 @@ public class CrossShulkerSortClient implements ClientModInitializer {
                 net.fabricmc.fabric.api.networking.v1.PacketByteBufs.empty());
     }
 }
+

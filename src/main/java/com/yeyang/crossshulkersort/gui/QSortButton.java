@@ -44,8 +44,9 @@ public class QSortButton extends ButtonWidget {
         DrawableHelper.fill(matrices, x, y + this.height - 1, x + this.width, y + this.height, bg);
         DrawableHelper.fill(matrices, x, y, x + 1, y + this.height, bg);
         DrawableHelper.fill(matrices, x + this.width - 1, y, x + this.width, y + this.height, bg);
-        DrawableHelper.drawCenteredTextWithShadow(matrices, MinecraftClient.getInstance().textRenderer,
-                getMessage().asOrderedText(), x + this.width / 2, y + 1, 0xFFFFFFFF);
+        // NOTE (<=1.16 branch): no shadow-text helper here - plain centered text.
+        DrawableHelper.drawCenteredText(matrices, MinecraftClient.getInstance().textRenderer,
+                getMessage(), x + this.width / 2, y + 1, 0xFFFFFFFF);
     }
 
     @Override

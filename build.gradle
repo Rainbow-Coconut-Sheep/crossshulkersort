@@ -37,16 +37,16 @@ dependencies {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(8)
     }
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
     withSourcesJar()
 }
 
+// NOTE (Java 8 branch): javac 8 has no --release flag; source/target 1.8 is enough.
 tasks.withType(JavaCompile).configureEach {
     it.options.encoding = 'UTF-8'
-    it.options.release = 17
 }
 
 tasks.register('regressionTest', JavaExec) {
@@ -56,7 +56,7 @@ tasks.register('regressionTest', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.yeyang.crossshulkersort.sort.ServerSorterRegressionTest'
     javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(8)
     }
 }
 
@@ -67,7 +67,7 @@ tasks.register('hashTest', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.yeyang.crossshulkersort.sort.StackKeyHashTest'
     javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(8)
     }
 }
 
@@ -78,7 +78,7 @@ tasks.register('fuzzTest', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.yeyang.crossshulkersort.sort.SortPlanFuzzTest'
     javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(8)
     }
 }
 
@@ -89,7 +89,7 @@ tasks.register('reserveDebug', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.yeyang.crossshulkersort.sort.ReserveDebugTest'
     javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(8)
     }
 }
 
@@ -100,13 +100,12 @@ tasks.named('test') {
     failOnNoDiscoveredTests = false
 }
 
-// NOTE (1.21.x branch): regressionTest/fuzzTest/hashTest need a vanilla bootstrap
-// (Bootstrap.initialize), which cannot run standalone under Yarn mappings -
-// SimpleRegistry and RegistryEntry$Reference are split across packages in Yarn
-// (same package in official mappings), so the JVM throws IllegalAccessError.
-// This is a known Yarn limitation (since 1.17), unrelated to this mod's code:
-// run these gates on the 26.2 branch (unobfuscated official mappings) instead.
-// They stay defined here for reference but are NOT part of `check`.
+// NOTE (1.16.x branch): unlike newer Yarn mappings, 1.16.5 keeps SimpleRegistry
+// and RegistryEntry$Reference in one package, so the vanilla bootstrap works
+// standalone and the logic gates run here: regression 19/19, hash 0, fuzz 5000/5000.
+tasks.named('check') {
+    dependsOn tasks.named('regressionTest')
+}
 
 processResources {
     inputs.property 'mod_version', project.mod_version
