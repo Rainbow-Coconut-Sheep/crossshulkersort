@@ -31,9 +31,8 @@ dependencies {
     // NOTE (1.20.1 branch): no Item Scroller integration - masa 0.20.0 has no
     // inventory sorting to mirror, so ItemScrollerSortOrder is vanilla id order.
 
-    // Config screen (soft deps: only loaded when ModMenu/Cloth Config are installed)
-    modImplementation "com.terraformersmc:modmenu:7.2.2"
-    modImplementation "me.shedaniel.cloth:cloth-config-fabric:11.1.136"
+    // NOTE (1.19.x branch): no menu integration - config stays file-based
+    // (config/crossshulkersort.json), same keys as other branches.
 }
 
 java {

@@ -2,15 +2,16 @@ package com.yeyang.crossshulkersort.gui;
 
 import com.yeyang.crossshulkersort.CrossShulkerSortClient;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 
 /**
- * The "Q" button in the inventory screen. Vanilla MC style (frame + label).
+ * The "Q" button in the inventory screen (1.19.x: MatrixStack rendering).
  * Click it to start the cross-box sort; hold Shift and drag to reposition it (persisted).
  */
 public class QSortButton extends ButtonWidget {
@@ -34,14 +35,17 @@ public class QSortButton extends ButtonWidget {
 
     /** Small vanilla-style frame with the "Q" label drawn centered. */
     @Override
-    protected void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderButton(MatrixStack matrices, int mouseX, int mouseY, float delta) {
         int x = getX();
         int y = getY();
         int bg = this.active ? (this.isHovered() ? 0xFFA0A0A0 : 0xFF888888) : 0xFF555555;
-        context.fill(x, y, x + this.width, y + this.height, 0xFF000000);
-        context.drawBorder(x, y, this.width, this.height, bg);
-        context.drawCenteredTextWithShadow(MinecraftClient.getInstance().textRenderer, getMessage(),
-                x + this.width / 2, y + 1, 0xFFFFFFFF);
+        DrawableHelper.fill(matrices, x, y, x + this.width, y + this.height, 0xFF000000);
+        DrawableHelper.fill(matrices, x, y, x + this.width, y + 1, bg);
+        DrawableHelper.fill(matrices, x, y + this.height - 1, x + this.width, y + this.height, bg);
+        DrawableHelper.fill(matrices, x, y, x + 1, y + this.height, bg);
+        DrawableHelper.fill(matrices, x + this.width - 1, y, x + this.width, y + this.height, bg);
+        DrawableHelper.drawCenteredTextWithShadow(matrices, MinecraftClient.getInstance().textRenderer,
+                getMessage(), x + this.width / 2, y + 1, 0xFFFFFFFF);
     }
 
     @Override
