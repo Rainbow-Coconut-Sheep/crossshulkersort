@@ -34,7 +34,7 @@ public class QSortButton extends ButtonWidget {
 
     /** Small vanilla-style frame with the "Q" label drawn centered. */
     @Override
-    protected void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
         int x = getX();
         int y = getY();
         int bg = this.active ? (this.isHovered() ? 0xFFA0A0A0 : 0xFF888888) : 0xFF555555;
