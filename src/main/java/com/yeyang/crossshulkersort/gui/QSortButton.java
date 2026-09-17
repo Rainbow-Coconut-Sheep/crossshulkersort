@@ -7,6 +7,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.math.MathHelper;
 
 /**
@@ -26,7 +27,7 @@ public class QSortButton extends ButtonWidget {
     public QSortButton(int x, int y, int baseX, int baseY) {
         // NOTE (<=1.19.2): no Tooltip class and no narration ctor on this version;
         // the button label itself ("Q") stays readable without a tooltip.
-        super(x, y, 10, 10, Text.translatable("crossshulkersort.btn.label"),
+        super(x, y, 10, 10, new TranslatableText("crossshulkersort.btn.label"),
                 b -> com.yeyang.crossshulkersort.CrossShulkerSortClient.requestSort());
         this.baseX = baseX;
         this.baseY = baseY;

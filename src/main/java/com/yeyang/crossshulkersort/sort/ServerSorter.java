@@ -6,6 +6,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -97,14 +98,14 @@ public final class ServerSorter {
             if (r == 3) {
                 // a round applied bit-for-bit nothing: same state in means same plan
                 // out (deterministic), so further rounds cannot progress either
-                player.sendMessage(Text.translatable("crossshulkersort.err.stuck"));
+                player.sendMessage(new TranslatableText("crossshulkersort.err.stuck"), false);
                 return;
             }
             break; // nothing left to do
         }
         if (!didWork) {
             if (eff.chatReport) {
-                player.sendMessage(Text.translatable("crossshulkersort.done.nothing"));
+                player.sendMessage(new TranslatableText("crossshulkersort.done.nothing"), false);
             }
             return;
         }
@@ -120,7 +121,7 @@ public final class ServerSorter {
             }
         }
         if (eff.chatReport) {
-            player.sendMessage(Text.translatable("crossshulkersort.done", used, freed, ""));
+            player.sendMessage(new TranslatableText("crossshulkersort.done", used, freed, ""), false);
         }
     }
 
@@ -132,13 +133,13 @@ public final class ServerSorter {
             // another container (e.g. an open shulker box) is showing: sorting now
             // would yank items out from under it, so refuse LOUDLY instead of dying
             // silently - a silent no-op here looks exactly like "Q does nothing"
-            player.sendMessage(Text.translatable("crossshulkersort.err.container"));
+            player.sendMessage(new TranslatableText("crossshulkersort.err.container"), false);
             return 2;
         }
         if (!player.currentScreenHandler.getCursorStack().isEmpty()) {
             // an item is on the cursor (e.g. another inventory mod was mid-action) -
             // rewriting slots now would strand it
-            player.sendMessage(Text.translatable("crossshulkersort.err.carried"));
+            player.sendMessage(new TranslatableText("crossshulkersort.err.carried"), false);
             return 2;
         }
 
@@ -152,7 +153,7 @@ public final class ServerSorter {
         SortPlan plan = SortPlan.compute(inv, null);
         if (!plan.hasWork) {
             if (!quiet) {
-                player.sendMessage(Text.translatable("crossshulkersort.done.nothing"));
+                player.sendMessage(new TranslatableText("crossshulkersort.done.nothing"), false);
             }
             return 0;
         }
@@ -427,7 +428,7 @@ public final class ServerSorter {
                         dumpTypeTrace(plan, e.getKey(), before, after);
                     }
                 }
-                player.sendMessage(Text.translatable("crossshulkersort.err.internal"));
+                player.sendMessage(new TranslatableText("crossshulkersort.err.internal"), false);
                 return 2; // abort without touching anything
             }
             // recompute `after` after trimming and re-verify (same accounting as above)
@@ -471,7 +472,7 @@ public final class ServerSorter {
                 }
             }
             if (!equal) {
-                player.sendMessage(Text.translatable("crossshulkersort.err.internal"));
+                player.sendMessage(new TranslatableText("crossshulkersort.err.internal"), false);
                 return 2;
             }
         }
@@ -557,7 +558,7 @@ public final class ServerSorter {
             }
             player.playerScreenHandler.syncState();
         player.playerScreenHandler.sendContentUpdates();
-            player.sendMessage(Text.translatable("crossshulkersort.err.internal"));
+            player.sendMessage(new TranslatableText("crossshulkersort.err.internal"), false);
             return 2; // state restored to the pre-sort snapshot
         }
 
@@ -695,3 +696,4 @@ public final class ServerSorter {
         return new StackKey(stack);
     }
 }
+
