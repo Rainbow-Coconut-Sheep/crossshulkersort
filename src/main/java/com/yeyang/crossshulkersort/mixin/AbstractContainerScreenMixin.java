@@ -2,7 +2,7 @@ package com.yeyang.crossshulkersort.mixin;
 
 import com.yeyang.crossshulkersort.CrossShulkerSortClient;
 import com.yeyang.crossshulkersort.gui.QSortButton;
-import net.minecraft.client.gui.screen.ingame.ContainerScreen;
+import net.minecraft.client.gui.screen.ingame.AbstractContainerScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.container.Container;
 import org.spongepowered.asm.mixin.Mixin;
@@ -10,8 +10,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-// NOTE (1.15 branch): HandledScreen/ScreenHandler did not exist yet.
-@Mixin(ContainerScreen.class)
+// NOTE (1.15.1 branch): AbstractContainerScreen, not ContainerScreen (renamed in 1.15.2).
+@Mixin(AbstractContainerScreen.class)
 public abstract class AbstractContainerScreenMixin<T extends Container> {
 
     @Inject(method = "init", at = @At("TAIL"))
