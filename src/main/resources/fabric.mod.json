@@ -22,7 +22,7 @@
 		"crossshulkersort.mixins.json"
 	],
 	"depends": {
-		"minecraft": ">=1.16.1 <1.16.2",
+		"minecraft": ">=1.16 <1.16.1",
 		"fabricloader": ">=0.14.0",
 		"fabric-networking-v0": "*"
 	},
