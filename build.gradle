@@ -41,8 +41,8 @@ dependencies {
     implementation "fi.dy.masa.malilib:malilib-fabric-${project.minecraft_version}:${project.malilib_version}"
 
     // Config screen (soft deps: only loaded when ModMenu/Cloth Config are installed)
-    implementation "com.terraformersmc:modmenu:20.0.1"
-    implementation "me.shedaniel.cloth:cloth-config-fabric:26.2.155"
+    implementation "com.terraformersmc:modmenu:18.0.1"
+    implementation "me.shedaniel.cloth:cloth-config-fabric:26.1.154"
 }
 
 java {
