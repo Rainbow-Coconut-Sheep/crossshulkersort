@@ -1,14 +1,15 @@
 package com.yeyang.crossshulkersort.mixin;
 
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ClickableWidget;
+import net.minecraft.client.gui.widget.AbstractButtonWidget;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(Screen.class)
 public interface ScreenInvoker {
 
-    // NOTE (<=1.16 branch): no addDrawableChild yet - addButton takes ClickableWidget.
+    // NOTE (<=1.16.4 branch): no addDrawableChild/ClickableWidget yet - addButton
+    // takes AbstractButtonWidget.
     @Invoker("addButton")
-    <T extends ClickableWidget> T crossshulkersort$addRenderableWidget(T widget);
+    <T extends AbstractButtonWidget> T crossshulkersort$addRenderableWidget(T widget);
 }

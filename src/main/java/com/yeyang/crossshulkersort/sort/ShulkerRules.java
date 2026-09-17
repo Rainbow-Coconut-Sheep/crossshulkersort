@@ -4,9 +4,9 @@ import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ListTag;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +52,7 @@ public final class ShulkerRules {
         } else if (stack.getItem() != Items.SHULKER_BOX) {
             return false;
         }
-        NbtCompound tag = stack.getTag();
+        CompoundTag tag = stack.getTag();
         if (tag == null) {
             return true;
         }
@@ -69,22 +69,22 @@ public final class ShulkerRules {
     }
 
     /** display tag holding only a custom Name (no Lore) counts as "just named". */
-    private static boolean isPlainDisplayName(NbtCompound tag) {
-        NbtCompound display = tag.getCompound("display");
+    private static boolean isPlainDisplayName(CompoundTag tag) {
+        CompoundTag display = tag.getCompound("display");
         // NOTE (<=1.16 branch): NBT type ids as literals (8=string) - no *_TYPE constants yet.
         return display.contains("Name", 8) && !display.contains("Lore");
     }
 
     public static List<ItemStack> readContents(ItemStack box) {
         List<ItemStack> out = new ArrayList<>();
-        NbtCompound tag = box.getSubTag("BlockEntityTag");
+        CompoundTag tag = box.getSubTag("BlockEntityTag");
         // 9=list, 10=compound.
         if (tag == null || !tag.contains("Items", 9)) {
             return out;
         }
-        NbtList list = tag.getList("Items", 10);
-        for (NbtElement e : list) {
-            ItemStack s = ItemStack.fromNbt((NbtCompound) e);
+        ListTag list = tag.getList("Items", 10);
+        for (Tag e : list) {
+            ItemStack s = ItemStack.fromTag((CompoundTag) e);
             if (!s.isEmpty()) {
                 out.add(s);
             }
@@ -94,15 +94,15 @@ public final class ShulkerRules {
 
     /** Writes up to 27 slot stacks (EMPTY entries skipped); empty content removes the tag. */
     public static void writeContents(ItemStack box, List<ItemStack> slots) {
-        NbtList list = new NbtList();
+        ListTag list = new ListTag();
         for (int i = 0; i < Math.min(slots.size(), BOX_SLOTS); i++) {
             ItemStack s = slots.get(i);
             if (s.isEmpty()) {
                 continue;
             }
-            NbtCompound c = new NbtCompound();
+            CompoundTag c = new CompoundTag();
             c.putByte("Slot", (byte) i);
-            s.writeNbt(c);
+            s.toTag(c);
             list.add(c);
         }
         if (list.isEmpty()) {
@@ -137,4 +137,5 @@ public final class ShulkerRules {
         return total >= BOX_SLOTS * contents.get(0).getMaxCount();
     }
 }
+
 

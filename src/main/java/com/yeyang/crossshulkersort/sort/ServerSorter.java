@@ -3,7 +3,7 @@ package com.yeyang.crossshulkersort.sort;
 import com.yeyang.crossshulkersort.sort.SortPlan.BoxInfo;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
@@ -684,7 +684,7 @@ public final class ServerSorter {
     private static StackKey countKey(ItemStack stack) {
         if (ShulkerRules.isShulkerBoxItem(stack)) {
             ItemStack stripped = stack.copy();
-            NbtCompound tag = stripped.getTag();
+            CompoundTag tag = stripped.getTag();
             if (tag != null) {
                 tag.remove("BlockEntityTag");
                 if (tag.isEmpty()) {
@@ -696,5 +696,6 @@ public final class ServerSorter {
         return new StackKey(stack);
     }
 }
+
 
 
