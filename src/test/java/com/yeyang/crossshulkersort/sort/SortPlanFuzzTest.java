@@ -4,6 +4,7 @@ import net.minecraft.Bootstrap;
 import net.minecraft.SharedConstants;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
+import net.minecraft.entity.EntityEquipment;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -32,7 +33,7 @@ public final class SortPlanFuzzTest {
         for (long seed = 1; seed <= 5000; seed++) {
             Random r = new Random(seed);
             int boxCount = 4 + r.nextInt(4); // 4..7
-            PlayerInventory inv = new PlayerInventory(null);
+            PlayerInventory inv = new PlayerInventory(null, new EntityEquipment());
             // fill all 36 slots: boxes in random slots, loose elsewhere
             List<Integer> slots = new ArrayList<>();
             for (int i = 0; i < 36; i++) slots.add(i);

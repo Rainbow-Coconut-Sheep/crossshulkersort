@@ -4,6 +4,7 @@ import net.minecraft.Bootstrap;
 import net.minecraft.SharedConstants;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
+import net.minecraft.entity.EntityEquipment;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -39,7 +40,7 @@ public final class ReserveDebugTest {
                 Items.MUSIC_DISC_PIGSTEP, Items.BOW, Items.DIAMOND_SWORD,
                 Items.MINECART, Items.NETHERITE_AXE, Items.NETHERITE_PICKAXE,
                 Items.SHEARS, Items.FLINT_AND_STEEL};
-        PlayerInventory inventory = new PlayerInventory(null);
+        PlayerInventory inventory = new PlayerInventory(null, new EntityEquipment());
         java.util.Random r = new java.util.Random(7);
         for (int b = 0; b < 6; b++) {
             List<ItemStack> contents = new ArrayList<>();
